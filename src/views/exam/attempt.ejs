@@ -1,0 +1,177 @@
+<style>
+  .question-unanswered {
+    background-color: #fff3cd !important;
+    border: 2px solid #ffc107 !important;
+    box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.25) !important;
+  }
+
+  .alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    color: #856404;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    display: block !important;
+  }
+
+  .warning-shake {
+    animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  @keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+  }
+</style>
+
+<script>
+// Initialize attempt data for the external script
+window.attemptData = {
+    id: '<%= attempt._id %>',
+    endTime: '<%= attempt.endTime.getTime() %>'
+};
+
+// Global validateForm function for backward compatibility
+function validateForm(event) {
+    // This function is now handled in the external script
+    // but kept here for compatibility
+    return true;
+}
+
+// Global highlightUnansweredQuestions function for backward compatibility
+function highlightUnansweredQuestions() {
+    // This function is now handled in the external script
+    // but kept here for compatibility
+    return true;
+}
+</script>
+
+<!-- Include external JavaScript file -->
+<script src="/js/attempt.js"></script>
+
+<div class="container">
+    <!-- Previous header code remains the same -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0"><%= attempt.exam.title %></h3>
+                        <div class="d-flex align-items-center">
+                            <div class="me-4">
+                                <strong>الوقت المتبقي:</strong>
+                                <span id="timer" data-end-time="<%= attempt.endTime.getTime() %>" style="font-weight: bold; font-size: 1.2em; margin-left: 10px;">Initializing...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <form id="examForm" method="POST" action="/exams/<%= attempt.exam._id %>/attempt/<%= attempt._id %>/submit">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            
+            <% questions.forEach((question, index) => { %>
+                <div class="card mb-4" id="question-card-<%= index %>">
+                    <div class="card-header">
+                        <h5 class="mb-0">السؤال <%= index + 1 %></h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3"><%= question.text %></p>
+                        
+                        <!-- Question Images -->
+                        <% if (question.images && question.images.length > 0) { %>
+                            <div class="question-images mb-3">
+                                <% question.images.forEach(image => { %>
+                                    <div class="text-center mb-3">
+                                        <img src="<%= image.url %>" 
+                                             alt="Question image" 
+                                             class="img-fluid rounded shadow-sm"
+                                             style="max-width: 100%; max-height: 400px; object-fit: contain;">
+                                        <% if (image.caption) { %>
+                                            <p class="text-muted mt-2 small"><%= image.caption %></p>
+                                        <% } %>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                        
+                        <% if (question.type === 'MCQ') { %>
+                            <div class="list-group">
+                                <% question.options.forEach(option => { %>
+                                    <label class="list-group-item">
+                                        <input type="radio" 
+                                               name="answer_<%= question._id %>" 
+                                               value="<%= option._id %>"
+                                               class="me-2 question-input"
+                                               data-question-index="<%= index %>"
+                                               required>
+                                        <%= option.text %>
+                                    </label>
+                                <% }); %>
+                            </div>
+                        
+                        <% } else if (question.type === 'TrueFalse') { %>
+                            <div class="list-group">
+                                <label class="list-group-item">
+                                    <input type="radio" 
+                                           name="answer_<%= question._id %>" 
+                                           value="true"
+                                           class="me-2 question-input"
+                                           data-question-index="<%= index %>"
+                                           required>
+                                    True
+                                </label>
+                                <label class="list-group-item">
+                                    <input type="radio" 
+                                           name="answer_<%= question._id %>" 
+                                           value="false"
+                                           class="me-2 question-input"
+                                           data-question-index="<%= index %>"
+                                           required>
+                                    False
+                                </label>
+                            </div>
+                        
+                        <% } else { %>
+                            <textarea class="form-control question-input" 
+                                      name="answer_<%= question._id %>" 
+                                      rows="4"
+                                      data-question-index="<%= index %>"
+                                      required
+                                      minlength="1"
+                                      placeholder="Enter your answer here"></textarea>
+                        <% } %>
+
+                        <div class="mt-2 text-muted">
+                            <small>
+                                <i class="fas fa-star"></i> العلامات: <%= question.marks %>
+                                | <i class="fas fa-info-circle"></i> النوع: <%= question.type %>
+                            </small>
+                        </div>
+                        <div class="unanswered-warning mt-2 alert alert-warning d-none">
+                            <i class="fas fa-exclamation-triangle"></i> يرجى الإجابة على هذا السؤال قبل إرسال الاختبار!
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+
+            <div id="globalWarning" class="alert alert-warning mb-3 d-none">
+                <i class="fas fa-exclamation-triangle"></i> يرجى الإجابة على جميع الأسئلة قبل إرسال الاختبار!
+            </div>
+
+            <div class="d-grid gap-2 mb-4">
+                <button type="submit" class="btn btn-primary btn-lg"
+                        id="submitButton"
+                        <%= attempt.status === 'SUBMITTED' ? 'disabled' : '' %>
+                        style="<%= attempt.status === 'SUBMITTED' ? 'background-color: #6c757d; border-color: #6c757d;' : '' %>">
+                    <i class="fas fa-paper-plane"></i> إرسال الاختبار
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

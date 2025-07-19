@@ -1,0 +1,218 @@
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="card-title mb-1">تفاصيل السؤال</h1>
+                    <p class="text-muted mb-0">
+                        تم إنشاء بواسطة <%= question.createdBy.firstName %> <%= question.createdBy.lastName %> |
+                        الاختبار: <%= question.examId.title %>
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <% if ((user.role === 'teacher' || user.role === 'admin') && 
+                          (question.createdBy._id.toString() === user._id.toString() || 
+                           user.role === 'admin')) { %>
+                        <a href="/exams/<%= question.examId._id %>/questions/<%= question._id %>/edit" 
+                           class="btn btn-primary">
+                            <i class="fas fa-edit"></i> تعديل
+                        </a>
+                        <form action="/exams/<%= question.examId._id %>/questions/<%= question._id %>" 
+                              method="POST"
+                              onsubmit="return confirm('هل أنت متأكد من حذف هذا السؤال؟');">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>
+                        </form>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Question Information -->
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- Question Text -->
+                    <div class="mb-4">
+                        <h5>السؤال</h5>
+                        <p class="mb-0"><%= question.text %></p>
+                    </div>
+
+                    <!-- Images -->
+                    <% if (question.images && question.images.length > 0) { %>
+                        <div class="mb-4">
+                            <h5><i class="fas fa-images"></i> صور السؤال</h5>
+                            <div class="row">
+                                <% question.images.forEach((image, index) => { %>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card shadow-sm">
+                                            <img src="<%= image.url %>" 
+                                                 class="card-img-top" 
+                                                 alt="صورة السؤال <%= index + 1 %>"
+                                                 style="max-height: 300px; object-fit: contain; cursor: pointer;"
+                                                 onclick="openImageModal('<%= image.url %>', '<%= image.caption || `Image ${index + 1}` %>')">
+                                            <% if (image.caption) { %>
+                                                <div class="card-body">
+                                                    <p class="card-text text-muted small">
+                                                        <i class="fas fa-quote-left"></i> <%= image.caption %>
+                                                    </p>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> انقر على الصور لعرضها بالحجم الكامل
+                            </small>
+                        </div>
+                    <% } %>
+
+                    <!-- Answer Options/Details -->
+                    <div class="mb-4">
+                        <h5>تفاصيل الإجابة</h5>
+                        <% if (question.type === 'MCQ') { %>
+                            <div class="list-group">
+                                <% question.options.forEach(option => { %>
+                                    <div class="list-group-item <%= option.isCorrect ? 'list-group-item-success' : '' %>">
+                                        <div class="d-flex align-items-center">
+                                            <% if (option.isCorrect) { %>
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                            <% } else { %>
+                                                <i class="fas fa-circle text-muted me-2"></i>
+                                            <% } %>
+                                            <%= option.text %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } else if (question.type === 'TrueFalse') { %>
+                            <div class="alert alert-info">
+                                الإجابة الصحيحة: <%= question.correctAnswer %>
+                            </div>
+                        <% } else if (question.type === 'ShortAnswer') { %>
+                            <div class="alert alert-info">
+                                الإجابة المتوقعة: <%= question.correctAnswer %>
+                            </div>
+                        <% } else if (question.type === 'Essay') { %>
+                            <div class="alert alert-info">
+                                هذا سؤال امتحاني يتطلب تقييم يدوي.
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Explanation -->
+                    <% if (question.explanation) { %>
+                        <div class="mb-4">
+                            <h5>التفسير</h5>
+                            <div class="alert alert-secondary">
+                                <%= question.explanation %>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="col-md-4">
+                    <!-- Question Metadata -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">تفاصيل السؤال</h5>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="fas fa-tag"></i>
+                                    نوع: <%= question.type %>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-star"></i>
+                                    الدرجات: <%= question.marks %>
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-chart-line"></i>
+                                    الصعوبة: 
+                                    <span class="badge bg-<%= 
+                                        question.difficulty === 'Easy' ? 'success' : 
+                                        question.difficulty === 'Medium' ? 'warning' : 
+                                        'danger' %>">
+                                        <%= question.difficulty %>
+                                    </span>
+                                </li>
+                                <% if (question.tags && question.tags.length > 0) { %>
+                                    <li class="mb-2">
+                                        <i class="fas fa-tags"></i>
+                                        الوسوم:
+                                        <div class="mt-1">
+                                            <% question.tags.forEach(tag => { %>
+                                                <span class="badge bg-secondary me-1">
+                                                    <%= tag %>
+                                                </span>
+                                            <% }); %>
+                                        </div>
+                                    </li>
+                                <% } %>
+                                <li class="mb-2">
+                                    <i class="fas fa-clock"></i>
+                                    تم إنشاء: <%= new Date(question.createdAt).toLocaleString() %>
+                                </li>
+                                <% if (question.updatedAt > question.createdAt) { %>
+                                    <li>
+                                        <i class="fas fa-edit"></i>
+                                        تم التحديث: <%= new Date(question.updatedAt).toLocaleString() %>
+                                    </li>
+                                <% } %>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="mt-4">
+                <a href="/exams/<%= question.examId._id %>/questions" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> العودة إلى الأسئلة
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">صورة السؤال</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="صورة السؤال" class="img-fluid">
+                <p id="modalCaption" class="mt-3 text-muted"></p>
+            </div>
+        </div>
+    </div>
+</div>      
+
+<!-- JavaScript for Image Modal -->
+<script>
+function openImageModal(imageUrl, caption) {
+    document.getElementById('modalImage').src = imageUrl;
+    document.getElementById('modalCaption').textContent = caption;
+    
+    const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    imageModal.show();
+}
+
+// Add hover effects to images
+document.addEventListener('DOMContentLoaded', function() {
+    const images = document.querySelectorAll('.card img[onclick]');
+    images.forEach(img => {
+        img.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02)';
+            this.style.transition = 'transform 0.2s ease';
+        });
+        
+        img.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>

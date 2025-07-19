@@ -1,0 +1,79 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">تعديل الدرس</h3>
+                <a href="/departments" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> العودة إلى الدروس
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <form action="/departments/<%= department._id %>?_method=PUT" method="POST" class="needs-validation" novalidate>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                
+                <div class="mb-3">
+                    <label for="name" class="form-label"> اسم الدرس</label>
+                    <input type="text" 
+                           class="form-control" 
+                           id="name" 
+                           name="name" 
+                           value="<%= department.name %>"
+                           required
+                           minlength="2"
+                           maxlength="100">
+                    <div class="invalid-feedback">
+                        يرجى إدخال اسم درس صالح (2-100 حرف).
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">وصف الدرس</label>
+                    <textarea class="form-control" 
+                              id="description" 
+                              name="description" 
+                              rows="3"><%= department.description %></textarea>
+                    <div class="form-text">
+                        يرجى إدخال وصف للدرس (اختياري).
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" 
+                               class="form-check-input" 
+                               id="isActive" 
+                               name="isActive"
+                               <%= department.isActive ? 'checked' : '' %>>
+                        <label class="form-check-label" for="isActive">
+                            الدرس مفعل
+                        </label>
+                    </div>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> تعديل الدرس
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Form Validation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script> 

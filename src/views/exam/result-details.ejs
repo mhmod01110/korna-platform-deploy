@@ -1,0 +1,298 @@
+<div class="container mt-4">
+    <% if (!exam.showResults) { %>
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h2 class="mb-0">
+                    <i class="fas fa-eye-slash me-2"></i>
+                    النتائج غير متاحة
+                </h2>
+            </div>
+            <div class="card-body text-center py-5">
+                <i class="fas fa-lock fa-4x text-muted mb-4"></i>
+                <h4 class="text-muted mb-3">النتائج مخفية</h4>
+                <p class="text-muted mb-4">
+                    النتائج لهذا الاختبار غير متاحة للعرض حاليًا. 
+                    يرجى الاتصال بمستر Korna  للحصول على المزيد من المعلومات.
+                </p>
+                <a href="/exams/<%= exam._id %>" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    العودة إلى الاختبار
+                </a>
+            </div>
+        </div>
+    <% } else { %>
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h2 class="mb-0"><%= exam.title %> - النتائج</h2>
+                <div>
+                    <span class="badge bg-light text-dark me-2">الدرجة: <%= result.grade %></span>
+                    <span class="badge bg-light text-dark">
+                        الدرجة: <%= result.obtainedMarks %>/<%= result.totalMarks %> (<%= result.percentage.toFixed(2) %>%)
+                    </span>
+                </div>
+            </div>
+        
+        <div class="card-body">
+            <!-- Student Info -->
+            <div class="mb-4">
+                <h4>معلومات الطلاب</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>الاسم:</strong> <%= result.studentId.firstName %> <%= result.studentId.lastName %></p>
+                        <p><strong>الحالة:</strong> 
+                            <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                <%= result.status %>
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>رقم المحاولة:</strong> <%= submission.attemptNumber %></p>
+                        <p><strong>تاريخ التقديم:</strong> <%= submission.submittedAt.toLocaleString() %></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics -->
+            <div class="mb-4">
+                <h4>تحليل الأداء</h4>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5>معدل الدرجات</h5>
+                                <h3 class="text-<%= result.percentage >= 60 ? 'success' : 'danger' %>">
+                                    <%= result.analytics.accuracyRate.toFixed(1) %>%
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5>الوقت المستغرق</h5>
+                                <% 
+                                let timeSpent;
+                                if (exam.type === 'PROJECT' && attempt) {
+                                    const startTime = new Date(attempt.startTime);
+                                    const endTime = new Date(attempt.submittedAt);
+                                    const totalSeconds = Math.floor((endTime - startTime) / 1000);
+                                    const hours = Math.floor(totalSeconds / 3600);
+                                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                                    const seconds = totalSeconds % 60;
+                                    timeSpent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                                } else {
+                                    const startTime = new Date(submission.startedAt);
+                                    const endTime = new Date(submission.completedAt);
+                                    const totalSeconds = Math.floor((endTime - startTime) / 1000);
+                                    const hours = Math.floor(totalSeconds / 3600);
+                                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                                    const seconds = totalSeconds % 60;
+                                    timeSpent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                                }
+                                %>
+                                <h3 class="text-info"><%= timeSpent %></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5>تفاصيل المحاولة</h5>
+                                <div class="text-muted">
+                                    <p class="mb-1">
+                                        <strong>بدأ:</strong><br>
+                                        <%= exam.type === 'PROJECT' && attempt ? 
+                                            new Date(attempt.startTime).toLocaleString() :
+                                            new Date(submission.startedAt).toLocaleString() %>
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>تقديم:</strong><br>
+                                        <%= exam.type === 'PROJECT' && attempt ? 
+                                            new Date(attempt.submittedAt).toLocaleString() :
+                                            new Date(submission.completedAt).toLocaleString() %>
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>رقم المحاولة:</strong> <%= submission.attemptNumber %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <% if (exam.type === 'PROJECT') { %>
+                <!-- Project Submission Details -->
+                <div class="mt-4">
+                    <h4>تفاصيل تقديم المشروع</h4>
+                    <div class="card">
+                        <div class="card-body">
+                            <% if (submission.projectSubmission) { %>
+                                <!-- Project File -->
+                                <div class="mb-4">
+                                    <h5>ملف التقديم</h5>
+                                    <p>
+                                        <strong>اسم الملف:</strong> <%= submission.projectSubmission.fileName %><br>
+                                        <strong>تاريخ التقديم:</strong> <%= new Date(submission.projectSubmission.submittedAt).toLocaleString() %><br>
+                                        <% if (submission.projectSubmission.fileUrl) { %>
+                                            <a href="<%= submission.projectSubmission.fileUrl %>" class="btn btn-sm btn-primary mt-2" target="_blank">
+                                                <i class="fas fa-download"></i> تحميل ملف المشروع
+                                            </a>
+                                        <% } %>
+                                    </p>
+                                </div>
+
+                                <!-- Teacher's Feedback -->
+                                <div class="mb-4">
+                                    <h5>تعليق المدرس</h5>
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <p class="mb-0"><%= submission.projectSubmission.feedback.text %></p>
+                                            <small class="text-muted mt-2 d-block">
+                                                تعليق معطى في: <%= new Date(submission.projectSubmission.feedback.givenAt).toLocaleString() %>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> تفاصيل تقديم المشروع غير متاحة.
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            <% } else { %>
+                <!-- Questions and Answers for non-project exams -->
+                <div class="mt-4">
+                    <h4>الأسئلة والإجابات</h4>
+                    <% allAnswers.forEach((answer, index) => { %>
+                        <div class="card mb-3 <%= answer.isCorrect ? 'border-success' : 'border-danger' %>">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>السؤال <%= index + 1 %> (<%= answer.type %>)</span>
+                                <span class="badge bg-<%= answer.isCorrect ? 'success' : 'danger' %>">
+                                    <%= answer.marksObtained %>/<%= answer.questionId.marks %> الدرجات
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title"><%= answer.questionId.text %></h5>
+                                
+                                <!-- Question Images -->
+                                <% if (answer.questionId.images && answer.questionId.images.length > 0) { %>
+                                    <div class="question-images mb-3">
+                                        <% answer.questionId.images.forEach(image => { %>
+                                            <div class="text-center mb-3">
+                                                <img src="<%= image.url %>" 
+                                                     alt="Question image" 
+                                                     class="img-fluid rounded shadow-sm"
+                                                     style="max-width: 100%; max-height: 300px; object-fit: contain;">
+                                                <% if (image.caption) { %>
+                                                    <p class="text-muted mt-2 small"><%= image.caption %></p>
+                                                <% } %>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } %>
+                                
+                                <% if (answer.type === 'MCQ') { %>
+                                    <div class="options-list">
+                                        <% answer.questionId.options.forEach(option => { %>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" 
+                                                    disabled 
+                                                    <%= option._id.toString() === answer.selectedOption.toString() ? 'checked' : '' %>>
+                                                <label class="form-check-label <%= 
+                                                    option.isCorrect ? 'text-success fw-bold' : 
+                                                    (option._id.toString() === answer.selectedOption.toString() && !option.isCorrect ? 'text-danger' : '')
+                                                %>">
+                                                    <%= option.text %>
+                                                    <% if (option.isCorrect) { %> 
+                                                        <i class="fas fa-check text-success"></i>
+                                                    <% } else if (option._id.toString() === answer.selectedOption.toString() && !option.isCorrect) { %>
+                                                        <i class="fas fa-times text-danger"></i>
+                                                    <% } %>
+                                                </label>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } else if (answer.type === 'TrueFalse') { %>
+                                    <div class="true-false-answer">
+                                        <p>الإجابة الخاصة بك: 
+                                            <span class="<%= answer.isCorrect ? 'text-success' : 'text-danger' %>">
+                                                <%= answer.answer %>
+                                            </span>
+                                        </p>
+                                        <p>الإجابة الصحيحة: 
+                                            <span class="text-success">
+                                                <%= answer.questionId.correctAnswer %>
+                                            </span>
+                                        </p>
+                                    </div>
+                                <% } %>
+
+                                <% if (!answer.isCorrect && answer.questionId.explanation) { %>
+                                    <div class="mt-3 explanation alert alert-info">
+                                        <strong>التفسير:</strong> <%= answer.questionId.explanation %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+
+            <div class="card-footer">
+                <a href="/exams/<%= exam._id %>" class="btn btn-primary">العودة إلى الاختبار</a>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<!-- Appeal Modal -->
+<div class="modal fade" id="appealModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="/exams/results/appeal" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="resultId" id="appealResultId">
+                
+                <div class="modal-header">
+                    <h5 class="modal-title">طلب الاستئناف</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="appealReason" class="form-label">سبب الاستئناف</label>
+                        <textarea name="appealReason" 
+                                  id="appealReason" 
+                                  class="form-control" 
+                                  rows="4"
+                                  required></textarea>
+                        <div class="form-text">
+                            يرجى تقديم تفاصيل حول طلب الاستئناف.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">إرسال الاستئناف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Appeal Modal Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const appealModal = document.getElementById('appealModal');
+    const appealResultId = document.getElementById('appealResultId');
+    
+    appealModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const resultId = button.dataset.resultId;
+        appealResultId.value = resultId;
+    });
+});
+</script>

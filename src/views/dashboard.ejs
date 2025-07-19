@@ -1,0 +1,657 @@
+<%- contentFor('body') %>
+
+<div class="container mt-4">
+    <% if (user.role === 'student') { %>
+        <!-- Student Dashboard Content -->
+        <div class="row">
+            <!-- Statistics Cards -->
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">عدد الاختبارات</h5>
+                        <h2 class="display-4"><%= stats.totalExams %></h2>
+                        <p class="card-text">
+                            اختبارات للاختبار
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">متوسط الدرجات</h5>
+                        <h2 class="display-4"><%= stats.averageScore %>%</h2>
+                        <p class="card-text">
+                            متوسط الدرجات
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">اختبارات نجحت فيها</h5>
+                        <h2 class="display-4"><%= stats.examsPassed %></h2>
+                        <p class="card-text">
+                            <% if (stats.totalExams > 0) { %>
+                                (<%= ((stats.examsPassed / stats.totalExams) * 100).toFixed(1) %>%)
+                            <% } else { %>
+                                (0%)
+                            <% } %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">اختبارات فشلت فيها</h5>
+                        <h2 class="display-4"><%= stats.examsFailed %></h2>
+                        <p class="card-text">
+                            <% if (stats.totalExams > 0) { %>
+                                (<%= ((stats.examsFailed / stats.totalExams) * 100).toFixed(1) %>%)
+                            <% } else { %>
+                                (0%)
+                            <% } %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Attempts -->
+            <div class="col-md-12 mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="mcq-tab" data-bs-toggle="tab" href="#mcq-attempts" role="tab">
+                                    اختبارات اسئلة متعددة الاختيارات
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="project-tab" data-bs-toggle="tab" href="#project-attempts" role="tab">
+                                    اختبارات المشاريع
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <!-- MCQ Attempts Tab -->
+                            <div class="tab-pane fade show active" id="mcq-attempts" role="tabpanel">
+                                <% if (recentAttempts.filter(a => a.exam.type !== 'PROJECT').length > 0) { %>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>اختبار</th>
+                                                    <th>بدأ</th>
+                                                    <th>حالة</th>
+                                                    <th>العملية</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% recentAttempts.filter(a => a.exam.type !== 'PROJECT').forEach(attempt => { %>
+                                                    <tr>
+                                                        <td><%= attempt.exam.title %></td>
+                                                        <td><%= attempt.startTime.toLocaleDateString() %></td>
+                                                        <td>
+                                                            <span class="badge bg-warning text-dark">
+                                                                قيد التنفيذ
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <a href="/exams/<%= attempt.exam._id %>/attempt/<%= attempt._id %>" 
+                                                               class="btn btn-sm btn-primary">استمرار</a>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } %>
+
+                                <!-- Recent Results -->
+                                <% if (studentResults && studentResults.filter(r => r.examId.type !== 'PROJECT').length > 0) { %>
+                                    <h5 class="mt-4">نتائج الاختبارات</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>اختبار</th>
+                                                    <th>تاريخ</th>
+                                                    <th>درجة</th>
+                                                    <th>حالة</th>
+                                                    <th>العملية</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% studentResults.filter(r => r.examId.type !== 'PROJECT').forEach(result => { %>
+                                                    <tr>
+                                                        <td><%= result.examId.title %></td>
+                                                        <td><%= new Date(result.createdAt).toLocaleDateString() %></td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <%= result.percentage.toFixed(1) %>%
+                                                            <% } else { %>
+                                                                قيد الانتظار
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge <%= result.isReleased ? (result.status === 'PASS' ? 'bg-success' : 'bg-danger') : 'bg-warning text-dark' %>">
+                                                                <%= result.isReleased ? result.status : 'قيد الانتظار' %>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <a href="/exams/<%= result.examId._id %>/results/<%= result._id %>"
+                                                                   class="btn btn-sm btn-info">
+                                                                    <i class="fas fa-eye"></i> عرض النتائج
+                                                                </a>
+                                                                <% } else { %>
+                                                                <span class="badge bg-warning text-dark">نتائج قيد الانتظار</span>
+                                                            <% } %>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } %>
+
+                                <% if (!recentAttempts.filter(a => a.exam.type !== 'PROJECT').length && 
+                                      !studentResults?.filter(r => r.examId.type !== 'PROJECT').length) { %>
+                                    <div class="alert alert-info">لا يوجد اختبارات اسئلة متعددة الاختيارات أو نتائج لها.</div>
+                                <% } %>
+                            </div>
+
+                            <!-- Project Attempts Tab -->
+                            <div class="tab-pane fade" id="project-attempts" role="tabpanel">
+                                <% if (recentAttempts.filter(a => a.exam.type === 'PROJECT').length > 0) { %>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>مشروع</th>
+                                                    <th>بدأ</th>
+                                                    <th>حالة</th>
+                                                    <th>العملية</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% recentAttempts.filter(a => a.exam.type === 'PROJECT').forEach(attempt => { %>
+                                                    <tr>
+                                                        <td><%= attempt.exam.title %></td>
+                                                        <td><%= attempt.startTime.toLocaleDateString() %></td>
+                                                        <td>
+                                                            <span class="badge bg-warning text-dark">
+                                                                قيد التنفيذ
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <a href="/exams/<%= attempt.exam._id %>/submit-project" 
+                                                               class="btn btn-sm btn-primary">تقديم المشروع</a>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } %>
+
+                                <!-- Project Results -->
+                                <% if (studentResults && studentResults.filter(r => r.examId.type === 'PROJECT').length > 0) { %>
+                                    <h5 class="mt-4">نتائج المشاريع</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>مشروع</th>
+                                                    <th>تاريخ</th>
+                                                    <th>درجة</th>
+                                                    <th>حالة</th>
+                                                    <th>العملية</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% studentResults.filter(r => r.examId.type === 'PROJECT').forEach(result => { %>
+                                                    <tr>
+                                                        <td><%= result.examId.title %></td>
+                                                        <td><%= new Date(result.createdAt).toLocaleDateString() %></td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <%= result.obtainedMarks %>/<%= result.totalMarks %>
+                                                            <% } else { %>
+                                                                قيد الانتظار
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge <%= result.isReleased ? (result.status === 'PASS' ? 'bg-success' : 'bg-danger') : 'bg-warning text-dark' %>">
+                                                                <%= result.isReleased ? result.status : 'قيد الانتظار' %>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <% if (result.isReleased) { %>
+                                                                <a href="/exams/<%= result.examId._id %>/results/<%= result._id %>"
+                                                                   class="btn btn-sm btn-info">
+                                                                    <i class="fas fa-eye"></i> عرض النتائج
+                                                                </a>
+                                                                <% } else { %>
+                                                                <span class="badge bg-warning text-dark">نتائج قيد الانتظار</span>
+                                                            <% } %>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } %>
+
+                                <% if (!recentAttempts.filter(a => a.exam.type === 'PROJECT').length && 
+                                      !studentResults?.filter(r => r.examId.type === 'PROJECT').length) { %>
+                                    <div class="alert alert-info">لا يوجد اختبارات مشاريع أو نتائج لها.</div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Exams -->
+            <div class="col-md-12 mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="upcoming-mcq-tab" data-bs-toggle="tab" href="#upcoming-mcq" role="tab">
+                                    اختبارات اسئلة متعددة الاختيارات
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="upcoming-project-tab" data-bs-toggle="tab" href="#upcoming-project" role="tab">
+                                    اختبارات المشاريع
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <!-- Upcoming MCQ Tab -->
+                            <div class="tab-pane fade show active" id="upcoming-mcq" role="tabpanel">
+                                <% if (upcomingExams.filter(e => e.type !== 'PROJECT').length > 0) { %>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>عنوان</th>
+                                                    <th>بدأ</th>
+                                                    <th>مدة الاختبار</th>
+                                                    <th>العملية</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% upcomingExams.filter(e => e.type !== 'PROJECT').forEach(exam => { %>
+                                                    <tr>
+                                                        <td><%= exam.title %></td>
+                                                        <td><%= exam.startDate.toLocaleString() %></td>
+                                                        <td><%= exam.duration %> دقيقة</td>
+                                                        <td>
+                                                            <a href="/exams/<%= exam._id %>" class="btn btn-sm btn-primary">عرض التفاصيل</a>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } else { %>
+                                    <div class="alert alert-info">لا يوجد اختبارات اسئلة متعددة الاختيارات.</div>
+                                <% } %>
+                            </div>
+
+                            <!-- Upcoming Projects Tab -->
+                            <div class="tab-pane fade" id="upcoming-project" role="tabpanel">
+                                <% if (upcomingExams.filter(e => e.type === 'PROJECT').length > 0) { %>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>عنوان</th>
+                                                    <th>بدأ</th>
+                                                    <th>تاريخ الاختبار</th>
+                                                    <th>العملية</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% upcomingExams.filter(e => e.type === 'PROJECT').forEach(exam => { %>
+                                                    <tr>
+                                                        <td><%= exam.title %></td>
+                                                        <td><%= exam.startDate.toLocaleString() %></td>
+                                                        <td><%= exam.endDate.toLocaleString() %></td>
+                                                        <td>
+                                                            <a href="/exams/<%= exam._id %>" class="btn btn-sm btn-primary">عرض التفاصيل</a>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } else { %>
+                                    <div class="alert alert-info">لا يوجد اختبارات مشاريع.</div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } else { %>
+        <!-- Teacher/Admin Dashboard -->
+        <div class="row">
+            <!-- Quick Stats -->
+            <div class="col-md-12 mb-4">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">عدد الاختبارات</h5>
+                                <h2 class="mb-0"><%= stats.totalExams || 0 %></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">اختبارات مفعلة</h5>
+                                <h2 class="mb-0"><%= stats.activeExams || 0 %></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">عدد التقديمات</h5>
+                                <h2 class="mb-0"><%= stats.totalSubmissions || 0 %></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-dark">
+                            <div class="card-body">
+                                <h5 class="card-title">درجات قيد الانتظار</h5>
+                                <h2 class="mb-0"><%= stats.pendingGrades || 0 %></h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submissions Tabs -->
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="mcq-tab" data-bs-toggle="tab" href="#mcq-submissions" role="tab">
+                                    تقديمات اسئلة متعددة الاختيارات
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="project-tab" data-bs-toggle="tab" href="#project-submissions" role="tab">
+                                    تقديمات المشاريع
+                                </a>
+                            </li>
+                        </ul>
+                            <div class="d-flex gap-2">
+                                <select class="form-select form-select-sm" id="groupByFilter">
+                                    <option value="date">تصنيف بالتاريخ</option>
+                                    <option value="student">تصنيف بالطالب</option>
+                                    <option value="department">تصنيف بالدرس</option>
+                                </select>
+                                <button class="btn btn-sm btn-secondary" id="resetGrouping">
+                                    <i class="fas fa-sync"></i> إعادة تعيين
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content">
+                            <!-- MCQ Submissions Tab -->
+                            <div class="tab-pane fade show active" id="mcq-submissions" role="tabpanel">
+                                <% if (submissions.filter(s => s.submissionType !== 'PROJECT').length > 0) { %>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>طالب</th>
+                                                    <th>اختبار</th>
+                                                    <th>تاريخ التقديم</th>
+                                                    <th>درجة</th>
+                                                    <th>حالة</th>
+                                                    <th>العملية</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% submissions.filter(s => s.submissionType !== 'PROJECT').forEach(submission => { %>
+                                                    <tr data-student-id="<%= submission.studentId._id %>"
+                                                        data-student-name="<%= submission.studentId.firstName %> <%= submission.studentId.lastName %>"
+                                                        data-department-id="<%= submission.examId.department ? submission.examId.department._id : '' %>"
+                                                        data-department-name="<%= submission.examId.department ? submission.examId.department.name : 'Uncategorized' %>">
+                                                        <td><%= submission.studentId.firstName %> <%= submission.studentId.lastName %></td>
+                                                        <td><%= submission.examId.title %></td>
+                                                        <td><%= new Date(submission.submittedAt).toLocaleString() %></td>
+                                                        <td>
+                                                            <% if (submission.status === 'GRADED') { %>
+                                                                <%= submission.totalMarksObtained %>/<%= submission.examId.totalMarks %>
+                                                            <% } else { %>
+                                                                قيد الانتظار
+                                                            <% } %>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-<%= submission.status === 'GRADED' ? 'success' : 'warning' %>">
+                                                                <%= submission.status %>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <a href="/exams/<%= submission.examId._id %>/submissions/<%= submission._id %>" 
+                                                               class="btn btn-sm btn-primary">
+                                                                <i class="fas fa-eye"></i> عرض
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } else { %>
+                                    <div class="alert alert-info">لا يوجد تقديمات اسئلة متعددة الاختيارات.</div>
+                                <% } %>
+                            </div>
+
+                            <!-- Project Submissions Tab -->
+                            <div class="tab-pane fade" id="project-submissions" role="tabpanel">
+                                <% if (submissions.filter(s => s.submissionType === 'PROJECT').length > 0) { %>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>طالب</th>
+                                                    <th>مشروع</th>
+                                                    <th>تاريخ التقديم</th>
+                                                    <th>ملف</th>
+                                                    <th>حالة</th>
+                                                    <th>العملية</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <% submissions.filter(s => s.submissionType === 'PROJECT').forEach(submission => { %>
+                                                    <tr data-student-id="<%= submission.studentId._id %>"
+                                                        data-student-name="<%= submission.studentId.firstName %> <%= submission.studentId.lastName %>"
+                                                        data-department-id="<%= submission.examId.department ? submission.examId.department._id : '' %>"
+                                                        data-department-name="<%= submission.examId.department ? submission.examId.department.name : 'Uncategorized' %>">
+                                                        <td><%= submission.studentId.firstName %> <%= submission.studentId.lastName %></td>
+                                                        <td><%= submission.examId.title %></td>
+                                                        <td><%= new Date(submission.submittedAt).toLocaleString() %></td>
+                                                        <td>
+                                                            <a href="<%= submission.projectSubmission.fileUrl %>" target="_blank" 
+                                                               class="btn btn-sm btn-info">
+                                                                <i class="fas fa-download"></i> تحميل
+                                                            </a>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-<%= submission.status === 'GRADED' ? 'success' : 'warning' %>">
+                                                                <%= submission.status %>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <div class="btn-group">
+                                                                <% if (submission.status === 'GRADED') { %>
+                                                                    <a href="/exams/<%= submission.examId._id %>/submissions/<%= submission._id %>" 
+                                                                       class="btn btn-sm btn-primary">
+                                                                        <i class="fas fa-eye"></i> عرض
+                                                                    </a>
+                                                                <% } %>
+                                                                <a href="/exams/<%= submission.examId._id %>/submissions/<%= submission._id %>/grade" 
+                                                                   class="btn btn-sm <%= submission.status === 'GRADED' ? 'btn-warning' : 'btn-success' %>">
+                                                                    <i class="fas fa-<%= submission.status === 'GRADED' ? 'edit' : 'check' %>"></i> 
+                                                                    <%= submission.status === 'GRADED' ? 'تعديل الدرجة' : 'درجة' %>
+                                                                </a>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <% }); %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                <% } else { %>
+                                    <div class="alert alert-info">لا يوجد تقديمات مشاريع.</div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<!-- Grouping Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const groupByFilter = document.getElementById('groupByFilter');
+    const resetGrouping = document.getElementById('resetGrouping');
+    const submissionRows = document.querySelectorAll('tr[data-student-id]');
+    
+    function groupSubmissions(groupBy) {
+        const mcqTable = document.querySelector('#mcq-submissions table tbody');
+        const projectTable = document.querySelector('#project-submissions table tbody');
+        
+        if (!mcqTable || !projectTable) return;
+        
+        // Store original order
+        if (!mcqTable.dataset.originalHtml) {
+            mcqTable.dataset.originalHtml = mcqTable.innerHTML;
+        }
+        if (!projectTable.dataset.originalHtml) {
+            projectTable.dataset.originalHtml = projectTable.innerHTML;
+        }
+        
+        if (groupBy === 'date') {
+            // Reset to original order
+            mcqTable.innerHTML = mcqTable.dataset.originalHtml;
+            projectTable.innerHTML = projectTable.dataset.originalHtml;
+            return;
+        }
+        
+        // Group submissions
+        const mcqGroups = {};
+        const projectGroups = {};
+        
+        // Group MCQ submissions
+        mcqTable.querySelectorAll('tr[data-student-id]').forEach(row => {
+            let key, name;
+            
+            if (groupBy === 'student') {
+                key = row.dataset.studentId || 'unknown';
+                name = row.dataset.studentName || 'Unknown Student';
+            } else if (groupBy === 'department') {
+                key = row.dataset.departmentId || 'uncategorized';
+                name = row.dataset.departmentName || 'Uncategorized';
+            }
+            
+            if (!mcqGroups[key]) {
+                mcqGroups[key] = {
+                    name: name,
+                    rows: []
+                };
+            }
+            mcqGroups[key].rows.push(row.outerHTML);
+        });
+        
+        // Group Project submissions
+        projectTable.querySelectorAll('tr[data-student-id]').forEach(row => {
+            let key, name;
+            
+            if (groupBy === 'student') {
+                key = row.dataset.studentId || 'unknown';
+                name = row.dataset.studentName || 'Unknown Student';
+            } else if (groupBy === 'department') {
+                key = row.dataset.departmentId || 'uncategorized';
+                name = row.dataset.departmentName || 'Uncategorized';
+            }
+            
+            if (!projectGroups[key]) {
+                projectGroups[key] = {
+                    name: name,
+                    rows: []
+                };
+            }
+            projectGroups[key].rows.push(row.outerHTML);
+        });
+        
+        // Rebuild tables with groups
+        let mcqHtml = '';
+        let projectHtml = '';
+        
+        Object.entries(mcqGroups).forEach(([key, group]) => {
+            if (group.rows.length > 0) {
+                mcqHtml += `
+                    <tr class="table-secondary">
+                        <td colspan="6">
+                            <strong>${group.name}</strong> 
+                            <span class="badge bg-primary ms-2">${group.rows.length} تقديمات</span>
+                        </td>
+                    </tr>
+                    ${group.rows.join('')}
+                `;
+            }
+        });
+        
+        Object.entries(projectGroups).forEach(([key, group]) => {
+            if (group.rows.length > 0) {
+                projectHtml += `
+                    <tr class="table-secondary">
+                        <td colspan="6">
+                            <strong>${group.name}</strong>
+                            <span class="badge bg-primary ms-2">${group.rows.length} تقديمات</span>
+                        </td>
+                    </tr>
+                    ${group.rows.join('')}
+                `;
+            }
+        });
+        
+        mcqTable.innerHTML = mcqHtml || '<tr><td colspan="6" class="text-center">لا يوجد تقديمات</td></tr>';
+        projectTable.innerHTML = projectHtml || '<tr><td colspan="6" class="text-center">لا يوجد تقديمات</td></tr>';
+    }
+    
+    groupByFilter.addEventListener('change', function() {
+        groupSubmissions(this.value);
+    });
+    
+    resetGrouping.addEventListener('click', function() {
+        groupByFilter.value = 'date';
+        groupSubmissions('date');
+    });
+});
+</script>

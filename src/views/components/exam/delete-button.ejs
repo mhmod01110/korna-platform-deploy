@@ -1,0 +1,71 @@
+<%# This component handles exam deletion button %>
+<% if ((user.role === 'teacher' || user.role === 'admin') && (exam.createdBy._id.toString() === user._id.toString() || user.role === 'admin')) { %>
+    <form action="/exams/<%= exam._id %>" 
+          method="POST" 
+          class="d-inline delete-exam-form"
+          data-exam-id="<%= exam._id %>">
+        <input type="hidden" name="_method" value="DELETE">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash"></i> حذف الاختبار
+        </button>
+    </form>
+<% } %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteExamForms = document.querySelectorAll('.delete-exam-form');
+    
+    deleteExamForms.forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const examId = this.dataset.examId;
+            
+            if (!confirm('هل أنت متأكد أنك تريد حذف هذا الاختبار؟ سيؤدي ذلك أيضًا إلى حذف جميع النتائج، والإجابات، والمحاولات المرتبطة به. لا يمكن التراجع عن هذا الإجراء.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/exams/${examId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'CSRF-Token': '<%= csrfToken %>',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    if (typeof showToast === 'function') {
+                        showToast('success', data.message);
+                    } else {
+                        alert(data.message);
+                    }
+                    
+                    // Redirect or remove element based on context
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    } else {
+                        // If we're in a list view, remove the exam card/row
+                        const examElement = this.closest('.exam-item, .card, tr');
+                        if (examElement) {
+                            examElement.remove();
+                        }
+                    }
+                } else {
+                    throw new Error(data.error || 'خطأ في حذف الاختبار');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                if (typeof showToast === 'function') {
+                    showToast('error', error.message || 'خطأ في حذف الاختبار');
+                } else {
+                    alert(error.message || 'خطأ في حذف الاختبار');
+                }
+            }
+        });
+    });
+});</script> 

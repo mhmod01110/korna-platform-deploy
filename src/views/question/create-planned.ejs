@@ -1,0 +1,566 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">إضافة الأسئلة إلى الاختبار</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/exams/<%= examId %>/questions/create-bulk" method="POST" enctype="multipart/form-data" id="questionForm">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        
+                        <% if (mcqCount > 0) { %>
+                            <h4 class="mb-4">الأسئلة المتعددة الاختيارات</h4>
+                            <% for(let i = 0; i < mcqCount; i++) { %>
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5>السؤال المتعدد الاختيارات #<%= i + 1 %></h5>
+                                        <input type="hidden" name="questions[<%= i %>][type]" value="MCQ">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">نص السؤال</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][text]" required minlength="10"></textarea>
+                                            <small class="text-muted">يجب أن يكون النص أطول من 10 أحرف</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">الدرجات</label>
+                                            <input type="number" class="form-control" name="questions[<%= i %>][marks]" required min="1" value="1">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">الخيارات</label>
+                                            <div class="options-container" id="optionsContainer<%= i %>">
+                                                <!-- Dynamic options will be added here -->
+                                                <div class="option-row mb-2">
+                                                    <div class="input-group">
+                                                        <div class="input-group-text">
+                                                            <input type="radio" name="questions[<%= i %>][correctOption]" value="0" required>
+                                                        </div>
+                                                        <input type="text" class="form-control" name="questions[<%= i %>][options][]" placeholder="الخيار 1" required>
+                                                        <button type="button" class="btn btn-danger remove-option" disabled>
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="option-row mb-2">
+                                                    <div class="input-group">
+                                                        <div class="input-group-text">
+                                                            <input type="radio" name="questions[<%= i %>][correctOption]" value="1" required>
+                                                        </div>
+                                                        <input type="text" class="form-control" name="questions[<%= i %>][options][]" placeholder="الخيار 2" required>
+                                                        <button type="button" class="btn btn-danger remove-option" disabled>
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary btn-sm mt-2 add-option-btn" data-question-index="<%= i %>">
+                                                <i class="fas fa-plus"></i> إضافة خيار
+                                            </button>
+                                            <div class="form-text text-danger">
+                                                * يجب أن يكون لديك على الأقل 2 خيارات. اختر الإجابة الصحيحة باستخدام الزر.
+                                            </div>
+                                        </div>
+
+                                        <!-- Images Section -->
+                                        <div class="mb-3">
+                                            <label class="form-label">الصور (اختياري)</label>
+                                            <div class="image-container" id="imageContainer<%= i %>">
+                                                <div class="image-row mb-2">
+                                                    <div class="input-group">
+                                                        <input type="file" name="questions[<%= i %>][images][]" class="form-control" accept="image/*">
+                                                        <input type="text" name="questions[<%= i %>][captions][]" class="form-control" placeholder="وصف الصورة (اختياري)">
+                                                        <button type="button" class="btn btn-danger remove-image" disabled>
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary btn-sm mt-2 add-image-btn" data-question-index="<%= i %>">
+                                                <i class="fas fa-plus"></i> إضافة صورة
+                                            </button>
+                                        </div>
+
+                                        <!-- Additional Fields -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">الصعوبة</label>
+                                                    <select class="form-select" name="questions[<%= i %>][difficulty]">
+                                                        <option value="Easy">سهل</option>
+                                                        <option value="Medium" selected>متوسط</option>
+                                                        <option value="Hard">صعب</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">الوسوم</label>
+                                                    <input type="text" class="form-control" name="questions[<%= i %>][tags]" placeholder="وسوم مفصولة بفواصل">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">التفسير (اختياري)</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][explanation]" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% } %>
+
+                        <% if (trueFalseCount > 0) { %>
+                            <h4 class="mb-4">أسئلة صح أم خطأ</h4>
+                            <% for(let i = mcqCount; i < mcqCount + trueFalseCount; i++) { %>
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5>أسئلة صح أم خطأ #<%= i - mcqCount + 1 %></h5>
+                                        <input type="hidden" name="questions[<%= i %>][type]" value="TrueFalse">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">نص السؤال</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][text]" required minlength="10"></textarea>
+                                            <small class="text-muted">يجب أن يكون النص أطول من 10 أحرف</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">الدرجات</label>
+                                            <input type="number" class="form-control" name="questions[<%= i %>][marks]" required min="1" value="1">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">الإجابة الصحيحة</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="questions[<%= i %>][correctAnswer]" value="true" required>
+                                                <label class="form-check-label">صحيح</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="questions[<%= i %>][correctAnswer]" value="false" required>
+                                                <label class="form-check-label">خطأ</label
+                                            </div>
+                                        </div>
+
+                                        <!-- Images Section -->
+                                        <div class="mb-3">
+                                            <label class="form-label">الصور (اختياري)</label>
+                                            <div class="image-container" id="imageContainer<%= i %>">
+                                                <div class="image-row mb-2">
+                                                    <div class="input-group">
+                                                        <input type="file" name="questions[<%= i %>][images][]" class="form-control" accept="image/*">
+                                                        <input type="text" name="questions[<%= i %>][captions][]" class="form-control" placeholder="وصف الصورة (اختياري)">
+                                                        <button type="button" class="btn btn-danger remove-image" disabled>
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary btn-sm mt-2 add-image-btn" data-question-index="<%= i %>">
+                                                <i class="fas fa-plus"></i> إضافة صورة
+                                            </button>
+                                        </div>
+
+                                        <!-- Additional Fields -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">الصعوبة</label>
+                                                    <select class="form-select" name="questions[<%= i %>][difficulty]">
+                                                        <option value="Easy">سهل</option>
+                                                        <option value="Medium" selected>متوسط</option>
+                                                        <option value="Hard">صعب</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">الوسوم</label>
+                                                    <input type="text" class="form-control" name="questions[<%= i %>][tags]" placeholder="وسوم مفصولة بفواصل">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">التفسير (اختياري)</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][explanation]" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% } %>
+
+                        <% if (shortAnswerCount > 0) { %>
+                            <h4 class="mb-4">أسئلة الإجابة القصيرة</h4>
+                            <% for(let i = mcqCount + trueFalseCount; i < mcqCount + trueFalseCount + shortAnswerCount; i++) { %>
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5>Short Answer Question #<%= i - (mcqCount + trueFalseCount) + 1 %></h5>
+                                        <input type="hidden" name="questions[<%= i %>][type]" value="ShortAnswer">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Question Text</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][text]" required minlength="10"></textarea>
+                                            <small class="text-muted">Minimum 10 characters required</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Marks</label>
+                                            <input type="number" class="form-control" name="questions[<%= i %>][marks]" required min="1" value="1">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Correct Answer</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][correctAnswer]" required></textarea>
+                                        </div>
+
+                                        <!-- Images Section -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Images (Optional)</label>
+                                            <div class="image-container" id="imageContainer<%= i %>">
+                                                <div class="image-row mb-2">
+                                                    <div class="input-group">
+                                                        <input type="file" name="questions[<%= i %>][images][]" class="form-control" accept="image/*">
+                                                        <input type="text" name="questions[<%= i %>][captions][]" class="form-control" placeholder="Image caption (optional)">
+                                                        <button type="button" class="btn btn-danger remove-image" disabled>
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary btn-sm mt-2 add-image-btn" data-question-index="<%= i %>">
+                                                <i class="fas fa-plus"></i> إضافة صورة
+                                            </button>
+                                        </div>
+
+                                        <!-- Additional Fields -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Difficulty</label>
+                                                    <select class="form-select" name="questions[<%= i %>][difficulty]">
+                                                        <option value="Easy">Easy</option>
+                                                        <option value="Medium" selected>Medium</option>
+                                                        <option value="Hard">Hard</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Tags</label>
+                                                    <input type="text" class="form-control" name="questions[<%= i %>][tags]" placeholder="Comma-separated tags">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Explanation (Optional)</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][explanation]" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% } %>
+
+                        <% if (longAnswerCount > 0) { %>
+                            <h4 class="mb-4">Long Answer Questions</h4>
+                            <% for(let i = mcqCount + trueFalseCount + shortAnswerCount; i < mcqCount + trueFalseCount + shortAnswerCount + longAnswerCount; i++) { %>
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5>Long Answer Question #<%= i - (mcqCount + trueFalseCount + shortAnswerCount) + 1 %></h5>
+                                        <input type="hidden" name="questions[<%= i %>][type]" value="Essay">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Question Text</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][text]" required minlength="10"></textarea>
+                                            <small class="text-muted">Minimum 10 characters required</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Marks</label>
+                                            <input type="number" class="form-control" name="questions[<%= i %>][marks]" required min="1" value="1">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Model Answer</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][correctAnswer]" required></textarea>
+                                        </div>
+
+                                        <!-- Images Section -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Images (Optional)</label>
+                                            <div class="image-container" id="imageContainer<%= i %>">
+                                                <div class="image-row mb-2">
+                                                    <div class="input-group">
+                                                        <input type="file" name="questions[<%= i %>][images][]" class="form-control" accept="image/*">
+                                                        <input type="text" name="questions[<%= i %>][captions][]" class="form-control" placeholder="Image caption (optional)">
+                                                        <button type="button" class="btn btn-danger remove-image" disabled>
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-secondary btn-sm mt-2 add-image-btn" data-question-index="<%= i %>">
+                                                <i class="fas fa-plus"></i> Add Image
+                                            </button>
+                                        </div>
+
+                                        <!-- Additional Fields -->
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Difficulty</label>
+                                                    <select class="form-select" name="questions[<%= i %>][difficulty]">
+                                                        <option value="Easy">Easy</option>
+                                                        <option value="Medium" selected>Medium</option>
+                                                        <option value="Hard">Hard</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Tags</label>
+                                                    <input type="text" class="form-control" name="questions[<%= i %>][tags]" placeholder="Comma-separated tags">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Explanation (Optional)</label>
+                                            <textarea class="form-control" name="questions[<%= i %>][explanation]" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% } %>
+                        <% } %>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">حفظ جميع الأسئلة</button>
+                            <a href="/exams/<%= examId %>" class="btn btn-secondary">إلغاء</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Image and Options Handling -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle add image button clicks
+    document.querySelectorAll('.add-image-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const questionIndex = this.dataset.questionIndex;
+            const container = document.getElementById(`imageContainer${questionIndex}`);
+            
+            const imageRow = document.createElement('div');
+            imageRow.className = 'image-row mb-2';
+            imageRow.innerHTML = `
+                <div class="input-group">
+                    <input type="file" name="questions[${questionIndex}][images][]" class="form-control" accept="image/*">
+                    <input type="text" name="questions[${questionIndex}][captions][]" class="form-control" placeholder="وصف الصورة (اختياري)">
+                    <button type="button" class="btn btn-danger remove-image">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(imageRow);
+            updateRemoveImageButtons(container);
+        });
+    });
+
+    // Handle add option button clicks for MCQ questions
+    document.querySelectorAll('.add-option-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const questionIndex = this.dataset.questionIndex;
+            const container = document.getElementById(`optionsContainer${questionIndex}`);
+            const optionCount = container.children.length;
+            
+            const optionRow = document.createElement('div');
+            optionRow.className = 'option-row mb-2';
+            optionRow.innerHTML = `
+                <div class="input-group">
+                    <div class="input-group-text">
+                        <input type="radio" name="questions[${questionIndex}][correctOption]" value="${optionCount}" required>
+                    </div>
+                    <input type="text" class="form-control" name="questions[${questionIndex}][options][]" placeholder="Option ${optionCount + 1}" required>
+                    <button type="button" class="btn btn-danger remove-option">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(optionRow);
+            updateRemoveOptionButtons(container);
+        });
+    });
+
+    // Handle remove image button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-image') || e.target.closest('.remove-image')) {
+            const imageRow = e.target.closest('.image-row');
+            const container = imageRow.closest('.image-container');
+            imageRow.remove();
+            updateRemoveImageButtons(container);
+        }
+    });
+
+    // Handle remove option button clicks
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-option') || e.target.closest('.remove-option')) {
+            const optionRow = e.target.closest('.option-row');
+            const container = optionRow.closest('.options-container');
+            
+            if (container.children.length > 2) {
+                optionRow.remove();
+                updateOptionValues(container);
+                updateRemoveOptionButtons(container);
+            }
+        }
+    });
+
+    // Update remove image button states
+    function updateRemoveImageButtons(container) {
+        const removeButtons = container.querySelectorAll('.remove-image');
+        removeButtons.forEach(button => {
+            button.disabled = container.children.length <= 1;
+        });
+    }
+
+    // Update remove option button states
+    function updateRemoveOptionButtons(container) {
+        const removeButtons = container.querySelectorAll('.remove-option');
+        removeButtons.forEach(button => {
+            button.disabled = container.children.length <= 2;
+        });
+    }
+
+    // Update option radio button values and placeholders after removal
+    function updateOptionValues(container) {
+        const optionRows = container.querySelectorAll('.option-row');
+        optionRows.forEach((row, index) => {
+            const radio = row.querySelector('input[type="radio"]');
+            const textInput = row.querySelector('input[type="text"]');
+            
+            radio.value = index;
+            textInput.placeholder = `Option ${index + 1}`;
+        });
+    }
+
+    // Initialize remove button states
+    document.querySelectorAll('.image-container').forEach(container => {
+        updateRemoveImageButtons(container);
+    });
+    
+    document.querySelectorAll('.options-container').forEach(container => {
+        updateRemoveOptionButtons(container);
+    });
+
+    // Form validation before submission
+    document.getElementById('questionForm').addEventListener('submit', function(e) {
+        let isValid = true;
+        const errorMessages = [];
+
+        // Validate MCQ questions
+        document.querySelectorAll('.options-container').forEach((container, index) => {
+            const options = container.querySelectorAll('.option-row');
+            const questionNumber = index + 1;
+            
+            // Check minimum options
+            if (options.length < 2) {
+                isValid = false;
+                errorMessages.push(`MCQ Question #${questionNumber}: At least 2 options are required.`);
+                return;
+            }
+            
+            // Check if a correct answer is selected
+            const correctOption = container.querySelector('input[type="radio"]:checked');
+            if (!correctOption) {
+                isValid = false;
+                errorMessages.push(`السؤال المتعدد الاختيارات #${questionNumber}: يرجى اختيار الإجابة الصحيحة.`);
+                return;
+            }
+            
+            // Check if all options have text
+            let emptyOptions = 0;
+            options.forEach(option => {
+                const textInput = option.querySelector('input[type="text"]');
+                if (!textInput.value.trim()) {
+                    emptyOptions++;
+                }
+            });
+            
+            if (emptyOptions > 0) {
+                isValid = false;
+                errorMessages.push(`السؤال المتعدد الاختيارات #${questionNumber}: يجب أن يكون لديك نص في كل خيار.`);
+            }
+        });
+
+        if (!isValid) {
+            e.preventDefault();
+            alert('يرجى إصلاح الأخطاء التالية:\n\n' + errorMessages.join('\n'));
+            return false;
+        }
+    });
+
+    // For each image input in all questions
+    document.querySelectorAll('.image-container').forEach(function(container) {
+        container.addEventListener('change', function(e) {
+            if (e.target.classList.contains('form-control') && e.target.type === 'file') {
+                const fileInput = e.target;
+                const file = fileInput.files[0];
+                if (!file) return;
+                // Find the question index from the input name
+                const match = fileInput.name.match(/questions\[(\d+)\]\[images\]\[\]/);
+                if (!match) return;
+                const questionIndex = match[1];
+                const formData = new FormData();
+                formData.append('image', file);
+                // Optionally add caption if available
+                const captionInput = fileInput.parentElement.querySelector('input[type="text"]');
+                if (captionInput && captionInput.value) {
+                    formData.append('caption', captionInput.value);
+                }
+                fetch(`/questions/upload-image-temp`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    let previewDiv = fileInput.closest('.image-row').querySelector('.image-preview');
+                    if (!previewDiv) {
+                        previewDiv = document.createElement('div');
+                        previewDiv.className = 'image-preview mt-2';
+                        fileInput.closest('.image-row').appendChild(previewDiv);
+                    }
+                    if (data.success) {
+                        previewDiv.innerHTML = `<img src="${data.url}" alt="Image preview" style="max-width: 200px; max-height: 150px;" class="img-thumbnail mt-2">`;
+                        // Add hidden input to store uploaded image URL
+                        let hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = `questions[${questionIndex}][uploadedImages][]`;
+                        hiddenInput.value = data.url;
+                        fileInput.closest('.image-row').appendChild(hiddenInput);
+                    } else {
+                        previewDiv.innerHTML = `<span class='text-danger'>${data.message || 'Upload failed'}</span>`;
+                    }
+                })
+                .catch(err => {
+                    let previewDiv = fileInput.closest('.image-row').querySelector('.image-preview');
+                    if (!previewDiv) {
+                        previewDiv = document.createElement('div');
+                        previewDiv.className = 'image-preview mt-2';
+                        fileInput.closest('.image-row').appendChild(previewDiv);
+                    }
+                    previewDiv.innerHTML = `<span class='text-danger'>خطأ في الرفع</span>`;
+                });
+            }
+        });
+    });
+});
+</script>

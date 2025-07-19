@@ -1,0 +1,239 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>الاختبارات</h1>
+        <% if (user.role === 'teacher' || user.role === 'admin') { %>
+            <a href="/exams/create" class="btn btn-primary">
+                <i class="fas fa-plus"></i> إنشاء اختبار
+            </a>
+        <% } %>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <select class="form-select" id="departmentFilter">
+                        <option value="">جميع الدروس</option>
+                        <% if (typeof departments !== 'undefined') { %>
+                            <% departments.forEach(dept => { %>
+                                <option value="<%= dept._id %>" <%= query.department === dept._id.toString() ? 'selected' : '' %>>
+                                    <%= dept.name %>
+                                </option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">جميع الحالات</option>
+                        <option value="DRAFT" <%= query.status === 'DRAFT' ? 'selected' : '' %>>مسودة</option>
+                        <option value="PUBLISHED" <%= query.status === 'PUBLISHED' ? 'selected' : '' %>>منشور</option>
+                        <option value="IN_PROGRESS" <%= query.status === 'IN_PROGRESS' ? 'selected' : '' %>>قيد التنفيذ</option>
+                        <option value="COMPLETED" <%= query.status === 'COMPLETED' ? 'selected' : '' %>>منتهي</option>
+                        <option value="ARCHIVED" <%= query.status === 'ARCHIVED' ? 'selected' : '' %>>محظور</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="typeFilter">
+                        <option value="">جميع الأنواع</option>
+                        <option value="MCQ" <%= query.type === 'MCQ' ? 'selected' : '' %>>اختيار متعدد</option>
+                        <option value="PROJECT" <%= query.type === 'PROJECT' ? 'selected' : '' %>>مشروع</option>
+                        <option value="MIXED" <%= query.type === 'MIXED' ? 'selected' : '' %>>مختلط</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-secondary w-100" id="resetFilters">
+                        <i class="fas fa-sync"></i> إعادة تعيين
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exams List -->
+    <% if (exams.length === 0) { %>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> لا يوجد اختبارات.
+        </div>
+    <% } else { %>
+        <% 
+            // Group exams by department
+            const departmentExams = {};
+            exams.forEach(exam => {
+                const dept = exam.department ? exam.department.name : 'Other';
+                if (!departmentExams[dept]) {
+                    departmentExams[dept] = [];
+                }
+                departmentExams[dept].push(exam);
+            });
+        %>
+
+        <div class="accordion" id="departmentAccordion">
+            <% Object.entries(departmentExams).forEach(([department, deptExams], index) => { %>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading<%= index %>">
+                        <button class="accordion-button <%= index === 0 ? '' : 'collapsed' %>" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#collapse<%= index %>" 
+                                aria-expanded="<%= index === 0 ? 'true' : 'false' %>" 
+                                aria-controls="collapse<%= index %>">
+                            <%= department %>
+                            <span class="badge bg-primary ms-2">
+                                <%= deptExams.length %> اختبارات
+                            </span>
+                        </button>
+                    </h2>
+                    <div id="collapse<%= index %>" 
+                         class="accordion-collapse collapse <%= index === 0 ? 'show' : '' %>" 
+                         aria-labelledby="heading<%= index %>" 
+                         data-bs-parent="#departmentAccordion">
+                        <div class="accordion-body">
+                            <div class="row">
+                                <% deptExams.forEach(exam => { %>
+                                    <div class="col-md-6 mb-4">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <h5 class="card-title mb-0">
+                                                        <% if (exam.type === 'PROJECT') { %>
+                                                            <i class="fas fa-project-diagram text-primary me-2"></i>
+                                                        <% } %>
+                                                        <%= exam.title %>
+                                                    </h5>
+                                                    <span class="badge bg-<%= 
+                                                        exam.status === 'PUBLISHED' ? 'success' :
+                                                        exam.status === 'DRAFT' ? 'secondary' :
+                                                        exam.status === 'IN_PROGRESS' ? 'primary' :
+                                                        exam.status === 'COMPLETED' ? 'info' :
+                                                        'dark' %>">
+                                                        <%= exam.status %>
+                                                    </span>
+                                                </div>
+
+                                                <p class="card-text text-muted mb-3">
+                                                    <%= exam.description || 'لا يوجد وصف' %>
+                                                </p>
+
+                                                <div class="mb-3">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-clock"></i> المدة: <%= exam.duration %> دقيقة<br>
+                                                        <i class="fas fa-calendar"></i> البدء: <%= new Date(exam.startDate).toLocaleString() %><br>
+                                                        <i class="fas fa-star"></i> الدرجات الكلية: <%= exam.type === 'PROJECT' ? exam.projectTotalMarks : exam.questions.reduce((sum, q) => sum + (q.marks || 0), 0) %><br>
+                                                        <i class="fas fa-check-circle"></i> الدرجة المطلوبة للنجاح: <%= exam.passingMarks %>
+                                                    </small>
+                                                </div>
+
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <span class="badge bg-<%= exam.type === 'PROJECT' ? 'primary' : 'info' %> me-1">
+                                                            <%= exam.type %>
+                                                        </span>
+                                                        <% if (exam.isPublic) { %>
+                                                            <span class="badge bg-success">عام</span>
+                                                        <% } %>
+                                                    </div>
+                                                    <div class="btn-group">
+                                                        <a href="/exams/<%= exam._id %>" class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-eye"></i> عرض
+                                                        </a>
+                                                        <% if (user.role === 'teacher' && 
+                                                              (exam.createdBy._id.toString() === user._id.toString() || 
+                                                               user.role === 'admin')) { %>
+                                                            <a href="/exams/<%= exam._id %>/edit" class="btn btn-sm btn-secondary">
+                                                                <i class="fas fa-edit"></i> تعديل
+                                                            </a>
+                                                            <button type="button"
+                                                                    class="btn btn-sm btn-danger delete-exam"
+                                                                    data-exam-id="<%= exam._id %>">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        <% } %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+    <% } %>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">حذف الاختبار</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                هل أنت متأكد من حذف هذا الاختبار؟ لا يمكن التراجع عن هذا الإجراء.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form id="deleteForm" method="POST">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtering Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const departmentFilter = document.getElementById('departmentFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const resetButton = document.getElementById('resetFilters');
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const deleteForm = document.getElementById('deleteForm');
+    
+    // Apply filters
+    function applyFilters() {
+        const department = departmentFilter.value;
+        const status = statusFilter.value;
+        const type = typeFilter.value;
+        
+        const params = new URLSearchParams(window.location.search);
+        if (department) params.set('department', department);
+        else params.delete('department');
+        if (status) params.set('status', status);
+        else params.delete('status');
+        if (type) params.set('type', type);
+        else params.delete('type');
+        
+        window.location.search = params.toString();
+    }
+    
+    // Event listeners for filters
+    departmentFilter.addEventListener('change', applyFilters);
+    statusFilter.addEventListener('change', applyFilters);
+    typeFilter.addEventListener('change', applyFilters);
+    
+    // Reset filters
+    resetButton.addEventListener('click', function() {
+        window.location.href = window.location.pathname;
+    });
+    
+    // Handle delete buttons
+    document.querySelectorAll('.delete-exam').forEach(button => {
+        button.addEventListener('click', function() {
+            const examId = this.dataset.examId;
+            deleteForm.action = `/exams/${examId}`;
+            deleteModal.show();
+        });
+    });
+});
+</script>

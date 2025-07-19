@@ -1,0 +1,429 @@
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-users ms-2"></i>
+                        تقارير المستخدمين
+                    </h2>
+                    <p class="text-muted">إحصائيات وتحليلات شاملة للمستخدمين والأدوار</p>
+                </div>
+                <a href="/admin/reports" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-right ms-2"></i>
+                    العودة للتقارير
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <% 
+        const totalUsers = userStats.reduce((sum, stat) => sum + stat.count, 0);
+        const studentCount = userStats.find(stat => stat._id === 'student')?.count || 0;
+        const teacherCount = userStats.find(stat => stat._id === 'teacher')?.count || 0;
+        const adminCount = userStats.find(stat => stat._id === 'admin')?.count || 0;
+        %>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= totalUsers %></h3>
+                        <p>إجمالي المستخدمين</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card gradient-success">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-graduate fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= studentCount %></h3>
+                        <p>الطلاب</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card gradient-info">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-chalkboard-teacher fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= teacherCount %></h3>
+                        <p>المدرسين</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card gradient-warning">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-shield fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= adminCount %></h3>
+                        <p>الإداريين</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="modern-card">
+                <div class="card-header gradient-primary">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie ms-2"></i>
+                        توزيع أدوار المستخدمين
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="userRolesChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="modern-card h-100">
+                <div class="card-header gradient-success">
+                    <h5 class="mb-0">
+                        <i class="fas fa-percentage ms-2"></i>
+                        النسب المئوية
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12 mb-3">
+                            <h6 class="text-success">نسبة الطلاب</h6>
+                            <h4 class="text-success">
+                                <%= totalUsers > 0 ? Math.round((studentCount / totalUsers) * 100) : 0 %>%
+                            </h4>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <h6 class="text-info">نسبة المدرسين</h6>
+                            <h4 class="text-info">
+                                <%= totalUsers > 0 ? Math.round((teacherCount / totalUsers) * 100) : 0 %>%
+                            </h4>
+                        </div>
+                        <div class="col-12">
+                            <h6 class="text-warning">نسبة الإداريين</h6>
+                            <h4 class="text-warning">
+                                <%= totalUsers > 0 ? Math.round((adminCount / totalUsers) * 100) : 0 %>%
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Role Distribution Chart -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-header gradient-info">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar ms-2"></i>
+                        المقارنة بين الأدوار
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="roleComparisonChart" width="400" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-header gradient-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table ms-2"></i>
+                        تفاصيل الإحصائيات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <% if (userStats && userStats.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>دور المستخدم</th>
+                                        <th>العدد</th>
+                                        <th>النسبة المئوية</th>
+                                        <th>الوصف</th>
+                                        <th>الصلاحيات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% userStats.forEach(stat => { %>
+                                        <tr>
+                                            <td>
+                                                <span class="badge <%= 
+                                                    stat._id === 'student' ? 'bg-success' : 
+                                                    stat._id === 'teacher' ? 'bg-info' : 
+                                                    stat._id === 'admin' ? 'bg-warning text-dark' : 
+                                                    'bg-secondary' 
+                                                %>">
+                                                    <i class="fas <%= 
+                                                        stat._id === 'student' ? 'fa-user-graduate' : 
+                                                        stat._id === 'teacher' ? 'fa-chalkboard-teacher' : 
+                                                        stat._id === 'admin' ? 'fa-user-shield' : 
+                                                        'fa-user' 
+                                                    %> ms-1"></i>
+                                                    <%= stat._id === 'student' ? 'طالب' :
+                                                        stat._id === 'teacher' ? 'مدرس' :
+                                                        stat._id === 'admin' ? 'إداري' :
+                                                        stat._id || 'غير محدد' %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <strong><%= stat.count %></strong>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar <%= 
+                                                        stat._id === 'student' ? 'bg-success' : 
+                                                        stat._id === 'teacher' ? 'bg-info' : 
+                                                        stat._id === 'admin' ? 'bg-warning' : 
+                                                        'bg-secondary' 
+                                                    %>" role="progressbar" 
+                                                         style="width: <%= totalUsers > 0 ? (stat.count / totalUsers) * 100 : 0 %>%">
+                                                        <%= totalUsers > 0 ? Math.round((stat.count / totalUsers) * 100) : 0 %>%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-muted">
+                                                <%= stat._id === 'student' ? 'يمكنهم الدخول للاختبارات وعرض النتائج' :
+                                                    stat._id === 'teacher' ? 'يمكنهم إنشاء وإدارة الاختبارات' :
+                                                    stat._id === 'admin' ? 'صلاحيات كاملة على النظام' :
+                                                    'دور غير محدد' %>
+                                            </td>
+                                            <td>
+                                                <% if (stat._id === 'student') { %>
+                                                    <small class="text-muted">عرض، أداء الاختبارات</small>
+                                                <% } else if (stat._id === 'teacher') { %>
+                                                    <small class="text-muted">إنشاء، تحرير، حذف</small>
+                                                <% } else if (stat._id === 'admin') { %>
+                                                    <small class="text-muted">إدارة كاملة</small>
+                                                <% } else { %>
+                                                    <small class="text-muted">-</small>
+                                                <% } %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">لا توجد بيانات مستخدمين</h5>
+                            <p class="text-muted">ابدأ بإضافة مستخدمين جدد</p>
+                            <a href="/admin/users" class="btn btn-primary">
+                                <i class="fas fa-plus ms-2"></i>
+                                إدارة المستخدمين
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // User Roles Pie Chart
+    const ctx1 = document.getElementById('userRolesChart').getContext('2d');
+    
+    const pieData = {
+        labels: [
+            <% userStats.forEach((stat, index) => { %>
+                '<%= stat._id === "student" ? "طلاب" : 
+                     stat._id === "teacher" ? "مدرسين" : 
+                     stat._id === "admin" ? "إداريين" : 
+                     stat._id || "غير محدد" %>'<%= index < userStats.length - 1 ? ',' : '' %>
+            <% }) %>
+        ],
+        datasets: [{
+            data: [
+                <% userStats.forEach((stat, index) => { %>
+                    <%= stat.count %><%= index < userStats.length - 1 ? ',' : '' %>
+                <% }) %>
+            ],
+            backgroundColor: [
+                '#28a745', // Students - Green
+                '#17a2b8', // Teachers - Blue
+                '#ffc107', // Admins - Yellow
+                '#6c757d'  // Other - Gray
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+        }]
+    };
+
+    const pieConfig = {
+        type: 'doughnut',
+        data: pieData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((context.parsed / total) * 100);
+                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    new Chart(ctx1, pieConfig);
+
+    // Role Comparison Bar Chart
+    const ctx2 = document.getElementById('roleComparisonChart').getContext('2d');
+    
+    const barData = {
+        labels: [
+            <% userStats.forEach((stat, index) => { %>
+                '<%= stat._id === "student" ? "طلاب" : 
+                     stat._id === "teacher" ? "مدرسين" : 
+                     stat._id === "admin" ? "إداريين" : 
+                     stat._id || "غير محدد" %>'<%= index < userStats.length - 1 ? ',' : '' %>
+            <% }) %>
+        ],
+        datasets: [{
+            label: 'عدد المستخدمين',
+            data: [
+                <% userStats.forEach((stat, index) => { %>
+                    <%= stat.count %><%= index < userStats.length - 1 ? ',' : '' %>
+                <% }) %>
+            ],
+            backgroundColor: [
+                'rgba(40, 167, 69, 0.7)',   // Students - Green
+                'rgba(23, 162, 184, 0.7)',  // Teachers - Blue
+                'rgba(255, 193, 7, 0.7)',   // Admins - Yellow
+                'rgba(108, 117, 125, 0.7)'  // Other - Gray
+            ],
+            borderColor: [
+                '#28a745',
+                '#17a2b8', 
+                '#ffc107',
+                '#6c757d'
+            ],
+            borderWidth: 2,
+            borderRadius: 5
+        }]
+    };
+
+    const barConfig = {
+        type: 'bar',
+        data: barData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    };
+
+    new Chart(ctx2, barConfig);
+});
+</script>
+
+<style>
+    .stats-card {
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+    
+    .progress {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .table th {
+        border-top: none;
+        color: #495057;
+        font-weight: 600;
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+    
+    #userRolesChart,
+    #roleComparisonChart {
+        max-height: 300px;
+    }
+    
+    .badge i {
+        margin-right: 0.25rem;
+    }
+</style> 

@@ -1,0 +1,270 @@
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="h4 mb-0">
+                <i class="fas fa-chart-bar ms-2"></i>
+                لوحة تحكم التقارير
+            </h2>
+            <p class="text-muted">عرض شامل لجميع التقارير والإحصائيات</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-clipboard-list fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= stats.totalExams %></h3>
+                        <p>إجمالي النتائج</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card gradient-success">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= stats.passedExams %></h3>
+                        <p>الاختبارات المجتازة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card gradient-info">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-percentage fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= Math.round(stats.averageScore) %>%</h3>
+                        <p>متوسط الدرجات</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card gradient-warning">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-trophy fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= stats.totalExams > 0 ? Math.round((stats.passedExams / stats.totalExams) * 100) : 0 %>%</h3>
+                        <p>معدل النجاح</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Categories -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line ms-2"></i>
+                        أنواع التقارير
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <a href="/admin/reports/exams" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm hover-lift">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="fas fa-file-alt fa-3x text-primary"></i>
+                                        </div>
+                                        <h5 class="card-title">تقارير الاختبارات</h5>
+                                        <p class="card-text text-muted">إحصائيات وتحليلات الاختبارات</p>
+                                        <div class="mt-3">
+                                            <% if (examStats && examStats.length > 0) { %>
+                                                <% examStats.forEach(stat => { %>
+                                                    <span class="badge bg-primary ms-1">
+                                                        <%= stat._id || 'غير محدد' %>: <%= stat.count %>
+                                                    </span>
+                                                <% }) %>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary">لا توجد بيانات</span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <a href="/admin/reports/users" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm hover-lift">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="fas fa-users fa-3x text-success"></i>
+                                        </div>
+                                        <h5 class="card-title">تقارير المستخدمين</h5>
+                                        <p class="card-text text-muted">إحصائيات المستخدمين والأدوار</p>
+                                        <div class="mt-3">
+                                            <% if (userStats && userStats.length > 0) { %>
+                                                <% userStats.forEach(stat => { %>
+                                                    <span class="badge bg-success ms-1">
+                                                        <%= stat._id === 'student' ? 'طلاب' : 
+                                                            stat._id === 'teacher' ? 'مدرسين' : 
+                                                            stat._id === 'admin' ? 'إداريين' : stat._id %>: <%= stat.count %>
+                                                    </span>
+                                                <% }) %>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary">لا توجد بيانات</span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <a href="/admin/reports/performance" class="text-decoration-none">
+                                <div class="card h-100 border-0 shadow-sm hover-lift">
+                                    <div class="card-body text-center">
+                                        <div class="mb-3">
+                                            <i class="fas fa-chart-line fa-3x text-info"></i>
+                                        </div>
+                                        <h5 class="card-title">تقارير الأداء</h5>
+                                        <p class="card-text text-muted">تحليل الأداء العام والإحصائيات</p>
+                                        <div class="mt-3">
+                                            <span class="badge bg-info">
+                                                متوسط: <%= Math.round(stats.averageScore) %>%
+                                            </span>
+                                            <span class="badge bg-success ms-1">
+                                                نجح: <%= stats.passedExams %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Results -->
+    <div class="row">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-header gradient-info">
+                    <h5 class="mb-0">
+                        <i class="fas fa-clock ms-2"></i>
+                        آخر النتائج
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <% if (recentResults && recentResults.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>الطالب</th>
+                                        <th>الاختبار</th>
+                                        <th>الدرجة</th>
+                                        <th>الحالة</th>
+                                        <th>التاريخ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% recentResults.forEach(result => { %>
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-circle bg-primary text-white ms-2">
+                                                        <%= result.studentId.firstName.charAt(0).toUpperCase() %>
+                                                    </div>
+                                                    <%= result.studentId.firstName %> <%= result.studentId.lastName %>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="fw-medium"><%= result.examId.title %></span>
+                                            </td>
+                                            <td>
+                                                <span class="badge fs-6 <%= result.percentage >= 60 ? 'bg-success' : 'bg-danger' %>">
+                                                    <%= result.percentage.toFixed(1) %>%
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge <%= result.status === 'PASS' ? 'bg-success' : 'bg-danger' %>">
+                                                    <%= result.status === 'PASS' ? 'نجح' : 'راسب' %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    <%= new Date(result.createdAt).toLocaleDateString('ar-EG') %>
+                                                </small>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">لا توجد نتائج حديثة</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-circle {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stats-card {
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+    
+    .card.shadow-sm {
+        transition: all 0.3s ease;
+    }
+    
+    .table th {
+        border-top: none;
+        color: #495057;
+        font-weight: 600;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+</style> 

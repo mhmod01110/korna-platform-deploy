@@ -1,0 +1,31 @@
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">ادخل عدد الاسئلة لكل نوع</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/exams/<%= examId %>/questions/plan" method="POST">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        
+                        <div class="mb-3">
+                            <label for="mcqCount" class="form-label">اسئلة متعددة الاختيارات</label>
+                            <input type="number" class="form-control" id="mcqCount" name="mcqCount" min="0" value="0" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="trueFalseCount" class="form-label">اسئلة صح أم خطأ</label>
+                            <input type="number" class="form-control" id="trueFalseCount" name="trueFalseCount" min="0" value="0" required>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">استمرار لإضافة الاسئلة</button>
+                            <a href="/exams/<%= examId %>" class="btn btn-secondary">الغاء</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

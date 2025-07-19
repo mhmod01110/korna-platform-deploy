@@ -1,0 +1,329 @@
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="h4 mb-0">
+                        <i class="fas fa-file-alt ms-2"></i>
+                        تقارير الاختبارات
+                    </h2>
+                    <p class="text-muted">إحصائيات وتحليلات شاملة للاختبارات</p>
+                </div>
+                <a href="/admin/reports" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-right ms-2"></i>
+                    العودة للتقارير
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <% 
+        const totalExams = examStats.reduce((sum, stat) => sum + stat.count, 0);
+        const publishedCount = examStats.find(stat => stat._id === 'PUBLISHED')?.count || 0;
+        const draftCount = examStats.find(stat => stat._id === 'DRAFT')?.count || 0;
+        const archivedCount = examStats.find(stat => stat._id === 'ARCHIVED')?.count || 0;
+        %>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= totalExams %></h3>
+                        <p>إجمالي الاختبارات</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card gradient-success">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= publishedCount %></h3>
+                        <p>الاختبارات المنشورة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card gradient-warning">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-edit fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= draftCount %></h3>
+                        <p>المسودات</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stats-card gradient-info">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-archive fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h3><%= archivedCount %></h3>
+                        <p>المؤرشفة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="modern-card">
+                <div class="card-header gradient-primary">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie ms-2"></i>
+                        توزيع حالات الاختبارات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="examStatusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="modern-card h-100">
+                <div class="card-header gradient-success">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle ms-2"></i>
+                        ملخص الإحصائيات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12 mb-3">
+                            <h6 class="text-primary">معدل النشر</h6>
+                            <h4 class="text-success">
+                                <%= totalExams > 0 ? Math.round((publishedCount / totalExams) * 100) : 0 %>%
+                            </h4>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <h6 class="text-primary">معدل المسودات</h6>
+                            <h4 class="text-warning">
+                                <%= totalExams > 0 ? Math.round((draftCount / totalExams) * 100) : 0 %>%
+                            </h4>
+                        </div>
+                        <div class="col-12">
+                            <h6 class="text-primary">معدل الأرشفة</h6>
+                            <h4 class="text-info">
+                                <%= totalExams > 0 ? Math.round((archivedCount / totalExams) * 100) : 0 %>%
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="modern-card">
+                <div class="card-header gradient-info">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table ms-2"></i>
+                        تفاصيل الإحصائيات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <% if (examStats && examStats.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>حالة الاختبار</th>
+                                        <th>العدد</th>
+                                        <th>النسبة المئوية</th>
+                                        <th>الوصف</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% examStats.forEach(stat => { %>
+                                        <tr>
+                                            <td>
+                                                <span class="badge <%= 
+                                                    stat._id === 'PUBLISHED' ? 'bg-success' : 
+                                                    stat._id === 'DRAFT' ? 'bg-warning text-dark' : 
+                                                    stat._id === 'ARCHIVED' ? 'bg-info' : 
+                                                    'bg-secondary' 
+                                                %>">
+                                                    <%= stat._id === 'PUBLISHED' ? 'منشور' :
+                                                        stat._id === 'DRAFT' ? 'مسودة' :
+                                                        stat._id === 'ARCHIVED' ? 'مؤرشف' :
+                                                        stat._id || 'غير محدد' %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <strong><%= stat.count %></strong>
+                                            </td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar <%= 
+                                                        stat._id === 'PUBLISHED' ? 'bg-success' : 
+                                                        stat._id === 'DRAFT' ? 'bg-warning' : 
+                                                        stat._id === 'ARCHIVED' ? 'bg-info' : 
+                                                        'bg-secondary' 
+                                                    %>" role="progressbar" 
+                                                         style="width: <%= totalExams > 0 ? (stat.count / totalExams) * 100 : 0 %>%">
+                                                        <%= totalExams > 0 ? Math.round((stat.count / totalExams) * 100) : 0 %>%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-muted">
+                                                <%= stat._id === 'PUBLISHED' ? 'اختبارات متاحة للطلاب' :
+                                                    stat._id === 'DRAFT' ? 'اختبارات قيد الإعداد' :
+                                                    stat._id === 'ARCHIVED' ? 'اختبارات مؤرشفة' :
+                                                    'حالة أخرى' %>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">لا توجد اختبارات حتى الآن</h5>
+                            <p class="text-muted">ابدأ بإنشاء اختبار جديد</p>
+                            <a href="/exams/create" class="btn btn-primary">
+                                <i class="fas fa-plus ms-2"></i>
+                                إنشاء اختبار جديد
+                            </a>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Exam Status Chart
+    const ctx = document.getElementById('examStatusChart').getContext('2d');
+    
+    const data = {
+        labels: [
+            <% examStats.forEach((stat, index) => { %>
+                '<%= stat._id === "PUBLISHED" ? "منشور" : 
+                     stat._id === "DRAFT" ? "مسودة" : 
+                     stat._id === "ARCHIVED" ? "مؤرشف" : 
+                     stat._id || "غير محدد" %>'<%= index < examStats.length - 1 ? ',' : '' %>
+            <% }) %>
+        ],
+        datasets: [{
+            data: [
+                <% examStats.forEach((stat, index) => { %>
+                    <%= stat.count %><%= index < examStats.length - 1 ? ',' : '' %>
+                <% }) %>
+            ],
+            backgroundColor: [
+                '#28a745', // Published - Green
+                '#ffc107', // Draft - Yellow
+                '#17a2b8', // Archived - Blue
+                '#6c757d'  // Other - Gray
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+        }]
+    };
+
+    const config = {
+        type: 'doughnut',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((context.parsed / total) * 100);
+                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    new Chart(ctx, config);
+});
+</script>
+
+<style>
+    .stats-card {
+        transition: all 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    }
+    
+    .progress {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .table th {
+        border-top: none;
+        color: #495057;
+        font-weight: 600;
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+    
+    #examStatusChart {
+        max-height: 300px;
+    }
+</style> 

@@ -1,0 +1,291 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">إنشاء اختبار جديد</h3>
+                <a href="/exams" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> العودة إلى الاختبارات
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <form action="/exams/create" method="POST" class="needs-validation" novalidate>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <!-- Basic Information -->
+                <div class="mb-4">
+                    <h5>المعلومات الأساسية</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label">عنوان الاختبار</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="title" 
+                                   name="title" 
+                                   required
+                                   minlength="3"
+                                   maxlength="100">
+                            <div class="invalid-feedback">
+                                يجب أن يكون عنوان الاختبار بين 3 و 100 حرف.
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="type" class="form-label">نوع الاختبار</label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="">اختر النوع</option>
+                                <option value="MCQ">اختيار متعدد</option>
+                                <option value="PROJECT">مشروع</option>
+                                <option value="MIXED">مختلط</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                يرجى اختيار نوع الاختبار.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">وصف الاختبار</label>
+                        <textarea class="form-control" 
+                                  id="description" 
+                                  name="description" 
+                                  rows="3"
+                                  maxlength="500"></textarea>
+                        <div class="form-text">
+                            يرجى إعطاء وصف مختصر للاختبار (اختياري, أقصى 500 حرف).
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="department" class="form-label">الدرس</label>
+                            <select class="form-select" id="department" name="department" required>
+                                <option value="">اختر الدرس</option>
+                                <% departments.forEach(department => { %>
+                                    <option value="<%= department._id %>"><%= department.name %></option>
+                                <% }); %>
+                            </select>
+                            <div class="invalid-feedback">
+                                يرجى اختيار الدرس.
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="duration" class="form-label">المدة المحددة (دقائق)</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="duration" 
+                                   name="duration" 
+                                   value="120"
+                                   required
+                                   min="5"
+                                   max="10080">
+                            <div class="invalid-feedback">
+                                يجب أن تكون المدة المحددة بين 5 دقائق و 7 أيام (10080 دقيقة).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule -->
+                <div class="mb-4">
+                    <h5>الجدول</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="startDate" class="form-label">تاريخ البدء والوقت</label>
+                            <input type="datetime-local" 
+                                   class="form-control" 
+                                   id="startDate" 
+                                   name="startDate"
+                                   required>
+                            <div class="invalid-feedback">
+                                يرجى تحديد تاريخ البدء والوقت.
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="endDate" class="form-label">تاريخ الانتهاء والوقت</label>
+                            <input type="datetime-local" 
+                                   class="form-control" 
+                                   id="endDate" 
+                                   name="endDate" 
+                                   required>
+                            <div class="invalid-feedback">
+                                يرجى تحديد تاريخ الانتهاء والوقت.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="mb-4" id="examSettings">
+                    <h5>الإعدادات</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="maxAttempts" class="form-label">المحاولات القصوى</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="maxAttempts" 
+                                   name="maxAttempts" 
+                                   value="1"
+                                   required
+                                   min="1">
+                            <div class="invalid-feedback">
+                                يجب أن تكون المحاولات القصوى على الأقل 1.
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="resultReleaseDate" class="form-label">تاريخ إصدار النتائج والوقت</label>
+                            <input type="datetime-local" 
+                                   class="form-control" 
+                                   id="resultReleaseDate" 
+                                   name="resultReleaseDate"
+                                   required>
+                            <div class="form-text">
+                                يرجى تحديد تاريخ إصدار النتائج للطلاب.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 mcq-only-setting">
+                        <div class="form-check">
+                            <input type="checkbox" 
+                                   class="form-check-input" 
+                                   id="shuffleQuestions" 
+                                   name="shuffleQuestions" 
+                                   checked>
+                            <label class="form-check-label" for="shuffleQuestions">
+                                إختيار الأسئلة بشكل عشوائي
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" 
+                                   class="form-check-input" 
+                                   id="showResults" 
+                                   name="showResults" 
+                                   checked>
+                            <label class="form-check-label" for="showResults">
+                                عرض النتائج للطلاب
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" 
+                                   class="form-check-input" 
+                                   id="isPublic" 
+                                   name="isPublic"
+                                   checked>
+                            <label class="form-check-label" for="isPublic">
+                                جعل الاختبار عام
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Instructions (only shown for PROJECT type) -->
+                <div class="mb-4 d-none" id="projectInstructions">
+                    <h5>تعليمات المشروع</h5>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> اختبارات المشروع:
+                        <ul class="mb-0">
+                            <li>سيتم نشرها تلقائياً بعد إنشائها</li>
+                            <li>السماح بتقديم الملفات من قبل الطلاب</li>
+                            <li>الحاجة إلى تقييم مدرسي</li>
+                        </ul>
+                    </div>
+                    <div class="mb-3">
+                        <label for="totalMarks" class="form-label">العلامات الكلية</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="totalMarks" 
+                               name="projectTotalMarks" 
+                               min="1" 
+                               max="100"
+                               value="100"
+                               required>
+                        <div class="form-text">
+                            يرجى تحديد العلامات الكلية لهذا المشروع (1-100).
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="instructions" class="form-label">تعليمات المشروع</label>
+                        <textarea class="form-control" 
+                                  id="instructions" 
+                                  name="instructions" 
+                                  rows="6"
+                                  placeholder="يرجى إعطاء تعليمات مفصلة للمشروع..."
+                                  required></textarea>
+                        <div class="form-text">
+                            يرجى إعطاء تعليمات مفصلة للمشروع.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> إنشاء الاختبار
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Form Validation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates
+    const now = new Date();
+    const sixMonthsLater = new Date();
+    sixMonthsLater.setMonth(now.getMonth() + 6);
+    
+    // Format dates for datetime-local input
+    const formatDate = (date) => {
+        return date.toISOString().slice(0, 16);
+    };
+    
+    document.getElementById('startDate').value = formatDate(now);
+    document.getElementById('endDate').value = formatDate(sixMonthsLater);
+    document.getElementById('resultReleaseDate').value = formatDate(sixMonthsLater);
+    
+    // Handle exam type changes
+    const typeSelect = document.getElementById('type');
+    const projectInstructions = document.getElementById('projectInstructions');
+    const mcqOnlySettings = document.querySelectorAll('.mcq-only-setting');
+    
+    typeSelect.addEventListener('change', function() {
+        const isProject = this.value === 'PROJECT';
+        
+        // Toggle project instructions visibility
+        projectInstructions.classList.toggle('d-none', !isProject);
+        
+        // Toggle MCQ-specific settings
+        mcqOnlySettings.forEach(setting => {
+            setting.classList.toggle('d-none', isProject);
+        });
+        
+        // For project type, make instructions required
+        const instructionsTextarea = document.getElementById('instructions');
+        instructionsTextarea.required = isProject;
+        
+        // Adjust duration default for projects
+        const durationInput = document.getElementById('duration');
+            durationInput.value = 120; // 2 hours
+            durationInput.min = 1; // 5 minutes minimum
+    });
+    
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});</script> 

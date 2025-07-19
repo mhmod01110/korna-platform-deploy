@@ -1,0 +1,161 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">تقييم التقديم</h3>
+                <a href="/exams/<%= submission.examId._id %>/submissions" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> العودة إلى التقديمات
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Student Information -->
+            <div class="mb-4">
+                <h5>معلومات الطلاب</h5>
+                <p class="mb-1">
+                    <strong>الاسم:</strong> <%= submission.studentId.firstName %> <%= submission.studentId.lastName %>
+                </p>
+                <p class="mb-1">
+                    <strong>البريد الإلكتروني:</strong> <%= submission.studentId.email %>
+                </p>
+                <p class="mb-0">
+                    <strong>تاريخ التقديم:</strong> 
+                    <%= new Date(submission.projectSubmission.submittedAt).toLocaleString() %>
+                </p>
+            </div>
+
+            <!-- Project File -->
+            <div class="mb-4">
+                <h5>المشروع المقدم</h5>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-2">
+                            <strong>اسم الملف:</strong> <%= submission.projectSubmission.fileName %>
+                        </p>
+                        <p class="mb-2">
+                            <strong>نوع الملف:</strong> <%= submission.projectSubmission.fileType %>
+                        </p>
+                        <div class="mb-3">
+                            <a href="<%= submission.projectSubmission.fileUrl %>" 
+                               target="_blank" 
+                               class="btn btn-primary">
+                                <i class="fas fa-download"></i> تحميل المشروع
+                            </a>
+                        </div>
+                        
+                        <!-- File Preview -->
+                        <% if (submission.projectSubmission.fileType.startsWith('image/')) { %>
+                            <div class="mt-3">
+                                <h6>المعاينة:</h6>
+                                <img src="<%= submission.projectSubmission.fileUrl %>" 
+                                     alt="Project Preview" 
+                                     class="img-fluid" 
+                                     style="max-height: 300px;">
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grading Form -->
+            <div class="mb-4">
+                <h5>تقييم التقديم</h5>
+                <form id="gradeForm" class="needs-validation" novalidate>
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    
+                    <div class="mb-3">
+                        <label for="marks" class="form-label">الدرجات (من <%= submission.examId.projectTotalMarks %>)</label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="marks" 
+                               name="marks" 
+                               min="0" 
+                               max="<%= submission.examId.projectTotalMarks %>"
+                               required
+                               <% if (submission.status === 'GRADED') { %>
+                                   value="<%= submission.projectSubmission.marksObtained %>"
+                               <% } %>>
+                        <div class="invalid-feedback">
+                            يرجى إدخال الدرجات بين 0 و <%= submission.examId.projectTotalMarks %>.
+                        </div>
+                        <div class="form-text">
+                            يرجى إدخال الدرجات بين 0 و <%= submission.examId.projectTotalMarks %>. الدرجة المطلوبة للنجاح هي <%= Math.ceil(submission.examId.projectTotalMarks * 0.5) %>.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="feedback" class="form-label">التعليق</label>
+                        <textarea class="form-control" 
+                                  id="feedback" 
+                                  name="feedback" 
+                                  rows="4"
+                                  required><%= submission.projectSubmission.feedback ? submission.projectSubmission.feedback.text : '' %></textarea>
+                        <div class="invalid-feedback">
+                            يرجى إعطاء تعليمات للطلاب.
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> إرسال التقييم
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grading Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('gradeForm');
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!form.checkValidity()) {
+            e.stopPropagation();
+            form.classList.add('was-validated');
+            return;
+        }
+
+        try {
+            const response = await fetch('/exams/submissions/<%= submission._id %>/grade-project', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'CSRF-Token': '<%= csrfToken %>'
+                },
+                body: JSON.stringify({
+                    marks: Number(document.getElementById('marks').value),
+                    feedback: document.getElementById('feedback').value
+                })
+            });
+
+            if (!response.ok) {
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'خطأ في تقييم المشروع');
+                } else {
+                    throw new Error('خطأ في تقييم المشروع');
+                }
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                alert('تم تقييم المشروع بنجاح');
+                window.location.href = '/exams/<%= submission.examId._id %>/submissions';
+            } else {
+                throw new Error(data.error || 'خطأ في تقييم المشروع');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert(error.message || 'خطأ في تقييم المشروع');
+        }
+    });
+});</script> 

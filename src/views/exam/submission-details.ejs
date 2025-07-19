@@ -1,0 +1,209 @@
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h2 class="mb-0"><%= exam.title %> - مراجعة التقديم</h2>
+            <span class="badge badge-light">
+                الدرجة: <%= result.obtainedMarks %>/<%= result.totalMarks %> (<%= result.percentage.toFixed(2) %>%)
+            </span>
+        </div>
+
+        <div class="card-body">
+            <!-- Student and Submission Info -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">معلومات الطلاب</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>الاسم:</strong> <%= submission.studentId.firstName %> <%= submission.studentId.lastName %></p>
+                            <p><strong>البريد الإلكتروني:</strong> <%= submission.studentId.email %></p>
+                            <p><strong>رقم المحاولة:</strong> <%= submission.attemptNumber %></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">تفاصيل التقديم</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>الحالة:</strong> 
+                                <span class="badge badge-<%= submission.status === 'SUBMITTED' ? 'success' : 'warning' %>">
+                                    <%= submission.status %>
+                                </span>
+                            </p>
+                            <p><strong>تاريخ التقديم:</strong> <%= submission.submittedAt.toLocaleString() %></p>
+                            <p><strong>الوقت المستغرق:</strong> <%= Math.floor(submission.timeSpent / 60) %>m <%= submission.timeSpent % 60 %>s</p>
+                            <% if (submission.isLate) { %>
+                                <p class="text-danger"><strong>تقديم متأخر</strong></p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Summary -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">ملخص الأداء</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6>الإجابات الصحيحة</h6>
+                                <h3 class="text-success"><%= result.analytics.correctAnswers %></h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6>الإجابات الخاطئة</h6>
+                                <h3 class="text-danger"><%= result.analytics.incorrectAnswers %></h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6>معدل الدرجات</h6>
+                                <h3 class="text-primary"><%= result.analytics.accuracyRate.toFixed(1) %>%</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6>الأسئلة التي تم تخطيها</h6>
+                                <h3 class="text-warning"><%= result.analytics.skippedQuestions %></h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions and Answers -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">الأسئلة والإجابات</h5>
+                </div>
+                <div class="card-body">
+                    <% allAnswers.forEach((answer, index) => { %>
+                        <div class="card mb-3 <%= answer.isCorrect ? 'border-success' : 'border-danger' %>">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>السؤال <%= index + 1 %> (<%= answer.type %>)</span>
+                                <span class="badge badge-<%= answer.isCorrect ? 'success' : 'danger' %>">
+                                    <%= answer.marksObtained %>/<%= answer.questionId.marks %> الدرجات
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title"><%= answer.questionId.text %></h5>
+                                
+                                <!-- Question Images -->
+                                <% if (answer.questionId.images && answer.questionId.images.length > 0) { %>
+                                    <div class="question-images mb-3">
+                                        <% answer.questionId.images.forEach(image => { %>
+                                            <div class="text-center mb-3">
+                                                <img src="<%= image.url %>" 
+                                                     alt="صورة السؤال" 
+                                                     class="img-fluid rounded shadow-sm"
+                                                     style="max-width: 100%; max-height: 300px; object-fit: contain;">
+                                                <% if (image.caption) { %>
+                                                    <p class="text-muted mt-2 small"><%= image.caption %></p>
+                                                <% } %>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } %>
+                                
+                                <% if (answer.type === 'MCQ') { %>
+                                    <div class="options-list">
+                                        <% answer.questionId.options.forEach(option => { %>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" 
+                                                    disabled 
+                                                    <%= option._id.toString() === answer.selectedOption.toString() ? 'checked' : '' %>>
+                                                <label class="form-check-label <%= 
+                                                    option.isCorrect ? 'text-success font-weight-bold' : 
+                                                    (option._id.toString() === answer.selectedOption.toString() && !option.isCorrect ? 'text-danger' : '')
+                                                %>">
+                                                    <%= option.text %>
+                                                    <% if (option.isCorrect) { %> 
+                                                        <i class="fas fa-check text-success"></i>
+                                                    <% } else if (option._id.toString() === answer.selectedOption.toString() && !option.isCorrect) { %>
+                                                        <i class="fas fa-times text-danger"></i>
+                                                    <% } %>
+                                                </label>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } else if (answer.type === 'TrueFalse') { %>
+                                    <div class="true-false-answer">
+                                        <p>الإجابة الخاصة بك: 
+                                            <span class="<%= answer.isCorrect ? 'text-success' : 'text-danger' %>">
+                                                <%= answer.answer %>
+                                            </span>
+                                        </p>
+                                        <p>الإجابة الصحيحة: 
+                                            <span class="text-success">
+                                                <%= answer.questionId.correctAnswer %>
+                                            </span>
+                                        </p>
+                                    </div>
+                                <% } %>
+
+                                <% if (!answer.isCorrect && answer.questionId.explanation) { %>
+                                    <div class="mt-3 explanation alert alert-info">
+                                        <strong>التفسير:</strong> <%= answer.questionId.explanation %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+
+            <!-- Flags Section -->
+            <% if (submission.flags && (submission.flags.suspiciousActivity || submission.flags.tabSwitches > 0 || submission.flags.technicalIssues.length > 0)) { %>
+                <div class="card mt-4 border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">العلامات والمشاكل</h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (submission.flags.suspiciousActivity) { %>
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i> تم الكشف عن نشاط مشبوه
+                            </div>
+                        <% } %>
+                        
+                        <% if (submission.flags.tabSwitches > 0) { %>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exchange-alt"></i> تبديلات التبويب: <%= submission.flags.tabSwitches %>
+                            </div>
+                        <% } %>
+                        
+                        <% if (submission.flags.technicalIssues.length > 0) { %>
+                            <div class="technical-issues">
+                                <h6>المشاكل التقنية:</h6>
+                                <ul class="list-group">
+                                    <% submission.flags.technicalIssues.forEach(issue => { %>
+                                        <li class="list-group-item">
+                                            <%= issue.issue %>
+                                            <small class="text-muted d-block">
+                                                <%= issue.timestamp.toLocaleString() %>
+                                            </small>
+                                        </li>
+                                    <% }); %>
+                                </ul>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+
+        <div class="card-footer">
+            <a href="/dashboard" class="btn btn-secondary">العودة إلى لوحة التحكم</a>
+            <a href="/exams/<%= exam._id %>" class="btn btn-primary">عرض الاختبار</a>
+            <% if (submission.status === 'SUBMITTED' && !result) { %>
+                <button class="btn btn-success" onclick="gradeSubmission()">تقييم التقديم</button>
+            <% } %>
+        </div>
+    </div>
+</div>

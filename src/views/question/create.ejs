@@ -1,0 +1,437 @@
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">إنشاء سؤال جديد</h3>
+                <a href="/exams/<%= exam._id %>/questions" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> العودة إلى الأسئلة
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <form action="/exams/<%= exam._id %>/questions/create" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <!-- Question Type -->
+                <div class="mb-4">
+                    <label for="type" class="form-label">نوع السؤال</label>
+                    <select name="type" id="type" class="form-select" required>
+                        <option value="">اختر نوع السؤال</option>
+                        <option value="MCQ">متعدد الاختيارات</option>
+                        <option value="TrueFalse">صح أم خطأ</option>
+                        <!-- <option value="ShortAnswer">Short Answer</option>
+                        <option value="Essay">Essay</option> -->
+                    </select>
+                    <div class="invalid-feedback">
+                        يرجى اختيار نوع السؤال.
+                    </div>
+                </div>
+
+                <!-- Question Text -->
+                <div class="mb-4">
+                    <label for="text" class="form-label">نص السؤال</label>
+                    <textarea name="text" 
+                             id="text" 
+                             class="form-control" 
+                             rows="3" 
+                             required
+                             minlength="10"></textarea>
+                    <div class="invalid-feedback">
+                        يجب أن يكون نص السؤال أطول من 10 أحرف.
+                    </div>
+                </div>
+
+                <!-- Marks -->
+                <div class="mb-4">
+                    <label for="marks" class="form-label">الدرجات</label>
+                    <input type="number" 
+                           name="marks" 
+                           id="marks" 
+                           class="form-control" 
+                           required
+                           min="0"
+                           max="100">
+                    <div class="invalid-feedback">
+                        يجب أن يكون الدرجات بين 0 و 100.
+                    </div>
+                </div>
+
+                <!-- Dynamic Options Section -->
+                <div id="optionsSection"></div>
+
+                <!-- Explanation -->
+                <div class="mb-4">
+                    <label for="explanation" class="form-label">التفسير</label>
+                    <textarea name="explanation" 
+                             id="explanation" 
+                             class="form-control" 
+                             rows="3"></textarea>
+                    <div class="form-text">
+                        يرجى تقديم تفسير للإجابة الصحيحة (اختياري).
+                    </div>
+                </div>
+
+                <!-- Difficulty -->
+                <div class="mb-4">
+                    <label for="difficulty" class="form-label">مستوى الصعوبة</label>
+                    <select name="difficulty" id="difficulty" class="form-select" required>
+                        <option value="Easy">سهل</option>
+                        <option value="Medium" selected>متوسط</option>
+                        <option value="Hard">صعب</option>
+                    </select>
+                </div>
+
+                <!-- Tags -->
+                <div class="mb-4">
+                    <label for="tags" class="form-label">الوسوم</label>
+                    <input type="text" 
+                           name="tags" 
+                           id="tags" 
+                           class="form-control"
+                           placeholder="أدخل الوسوم مفصولة بفواصل">
+                    <div class="form-text">
+                        يرجى إضافة الوسوم لمساعدتك في تنظيم الأسئلة (اختياري).
+                    </div>
+                </div>
+
+                <!-- Images -->
+                <div class="mb-4">
+                    <label class="form-label">الصور (اختياري)</label>
+                    <div id="imageContainer">
+                        <div class="image-row mb-2">
+                            <div class="input-group">
+                                <input type="file" 
+                                       name="images[]" 
+                                       class="form-control image-file"
+                                       accept="image/*">
+                                <input type="text" 
+                                       name="captions[]" 
+                                       class="form-control image-caption"
+                                       placeholder="وصف الصورة (اختياري)">
+                                <button type="button" 
+                                        class="btn btn-danger remove-image"
+                                        disabled>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="image-preview mt-2"></div>
+                        </div>
+                    </div>
+                    <button type="button" 
+                            class="btn btn-secondary mt-2" 
+                            id="addImage">
+                        <i class="fas fa-plus"></i> إضافة صورة
+                    </button>
+                    <div class="form-text">
+                        يمكنك رفع عدة صور لدعم السؤال.
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> إنشاء سؤال
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Form Validation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    const typeSelect = document.getElementById('type');
+    const optionsSection = document.getElementById('optionsSection');
+    const imageContainer = document.getElementById('imageContainer');
+    const addImageBtn = document.getElementById('addImage');
+    const examId = '<%= exam._id %>';
+
+    // Enhanced form validation
+    form.addEventListener('submit', function(event) {
+        event.preventDefault(); // Always prevent default first
+        
+        if (!form.checkValidity()) {
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            return false;
+        }
+
+        // Additional validation for MCQ questions
+        if (typeSelect.value === 'MCQ') {
+            const correctAnswers = Array.from(document.querySelectorAll('.is-correct-input'))
+                .filter(input => input.value === "true");
+            
+            if (correctAnswers.length !== 1) {
+                alert('يرجى اختيار إجابة واحدة فقط للسؤال المتعدد الاختيارات.');
+                return false;
+            }
+        }
+
+        form.classList.add('was-validated');
+        
+        // If we got here, all validations passed
+        form.submit();
+    });
+
+    // Update the addImage function
+    addImageBtn.addEventListener('click', function() {
+        const imageRow = document.createElement('div');
+        imageRow.className = 'image-row mb-2';
+        imageRow.innerHTML = `
+            <div class="input-group">
+                <input type="file" 
+                       name="images[]"
+                       class="form-control image-file"
+                       accept="image/*">
+                <input type="text" 
+                       name="captions[]"
+                       class="form-control image-caption"
+                       placeholder="وصف الصورة (اختياري)">
+                <button type="button" class="btn btn-danger remove-image">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="image-preview mt-2"></div>
+        `;
+        imageContainer.appendChild(imageRow);
+        updateRemoveImageButtons();
+    });
+
+    // Update remove image handler
+    imageContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-image') || 
+            e.target.closest('.remove-image')) {
+            const row = e.target.closest('.image-row');
+            row.remove();
+            updateRemoveImageButtons();
+        }
+    });
+
+    // Update remove image buttons state
+    function updateRemoveImageButtons() {
+        const removeButtons = imageContainer.querySelectorAll('.remove-image');
+        removeButtons.forEach(button => {
+            button.disabled = imageContainer.children.length <= 1;
+        });
+    }
+
+    // Question type change handler
+    typeSelect.addEventListener('change', function() {
+        const selectedType = this.value;
+        
+        switch(selectedType) {
+            case 'MCQ':
+                optionsSection.innerHTML = `
+                    <div class="mb-4">
+                        <label class="form-label">الخيارات</label>
+                        <div id="mcqOptions">
+                            <!-- Options will be added here -->
+                        </div>
+                        <button type="button" class="btn btn-secondary mt-2" id="addOption">
+                            <i class="fas fa-plus"></i> إضافة خيار
+                        </button>
+                        <div class="form-text text-danger">
+                            * يجب أن يكون لديك على الأقل 2 خيارات. اختر الإجابة الصحيحة باستخدام الزر.
+                        </div>
+                    </div>
+                `;
+                createMCQSection();
+                break;
+
+            case 'TrueFalse':
+                optionsSection.innerHTML = `
+                    <div class="mb-4">
+                        <label class="form-label">الإجابة الصحيحة</label>
+                        <div class="form-check mb-2">
+                            <input type="radio" name="correctAnswer" value="true" class="form-check-input" id="answerTrue" required>
+                            <label class="form-check-label" for="answerTrue">صحيح</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="radio" name="correctAnswer" value="false" class="form-check-input" id="answerFalse" required>
+                            <label class="form-check-label" for="answerFalse">خطأ</label>
+                        </div>
+                        <div class="invalid-feedback">
+                            يرجى اختيار الإجابة الصحيحة.
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'ShortAnswer':
+                optionsSection.innerHTML = `
+                    <div class="mb-4">
+                        <label for="correctAnswer" class="form-label">الإجابة الصحيحة</label>
+                        <input type="text" 
+                               name="correctAnswer" 
+                               id="correctAnswer" 
+                               class="form-control"
+                               required
+                               placeholder="أدخل الإجابة المتوقعة">
+                        <div class="invalid-feedback">
+                            يرجى تقديم الإجابة الصحيحة.
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            case 'Essay':
+                optionsSection.innerHTML = `
+                    <div class="mb-4">
+                        <label for="modelAnswer" class="form-label">الإجابة المثالية</label>
+                        <textarea name="modelAnswer" 
+                                 id="modelAnswer" 
+                                 class="form-control"
+                                 rows="4"
+                                 placeholder="أدخل إجابة مثالية للتقييم"></textarea>
+                        <div class="form-text">
+                            يرجى تقديم إجابة مثالية للتقييم (اختياري).
+                        </div>
+                    </div>
+                `;
+                break;
+                
+            default:
+                optionsSection.innerHTML = '';
+        }
+    });
+
+    // Function to create MCQ options section
+    function createMCQSection() {
+        const mcqOptions = document.getElementById('mcqOptions');
+        const addOptionBtn = document.getElementById('addOption');
+
+        // Function to add new option
+        function addOption() {
+            const optionCount = mcqOptions.children.length;
+            const newOption = document.createElement('div');
+            newOption.className = 'option-row mb-2';
+            newOption.innerHTML = `
+                <div class="input-group">
+                    <div class="input-group-text">
+                        <input type="radio" 
+                               name="correctOption" 
+                               value="${optionCount}"
+                               required
+                               onchange="updateCorrectOption(this, ${optionCount})">
+                    </div>
+                    <input type="text" 
+                           name="options[${optionCount}][text]" 
+                           class="form-control"
+                           placeholder="الخيار ${optionCount + 1}"
+                           required>
+                    <input type="hidden" 
+                           name="options[${optionCount}][isCorrect]" 
+                           value="false"
+                           class="is-correct-input">
+                    <button type="button" 
+                            class="btn btn-danger remove-option"
+                            ${optionCount < 2 ? 'disabled' : ''}>
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            mcqOptions.appendChild(newOption);
+            updateRemoveButtons();
+        }
+
+        // Function to update isCorrect values
+        window.updateCorrectOption = function(radio, selectedIndex) {
+            if (!radio.checked) return;
+            
+            // Set all options to false first
+            const allHiddenInputs = mcqOptions.querySelectorAll('.is-correct-input');
+            allHiddenInputs.forEach(input => input.value = "false");
+            
+            // Set the selected option to true
+            const selectedHiddenInput = mcqOptions.querySelector(`input[name="options[${selectedIndex}][isCorrect]"]`);
+            if (selectedHiddenInput) {
+                selectedHiddenInput.value = "true";
+                console.log('Set option', selectedIndex, 'as correct answer');
+            }
+        };
+
+        // Function to update remove buttons state
+        function updateRemoveButtons() {
+            const removeButtons = mcqOptions.querySelectorAll('.remove-option');
+            removeButtons.forEach(btn => {
+                btn.disabled = mcqOptions.children.length <= 2;
+            });
+        }
+
+        // Add initial two options
+        addOption();
+        addOption();
+
+        // Add option button click handler
+        addOptionBtn.addEventListener('click', addOption);
+
+        // Remove option button click handler
+        mcqOptions.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-option')) {
+                const optionRow = e.target.closest('.option-row');
+                if (mcqOptions.children.length > 2) {
+                    optionRow.remove();
+                    // Reindex the remaining options
+                    mcqOptions.querySelectorAll('.option-row').forEach((row, index) => {
+                        const radio = row.querySelector('input[type="radio"]');
+                        const textInput = row.querySelector('input[type="text"]');
+                        const isCorrectInput = row.querySelector('.is-correct-input');
+                        
+                        radio.value = index;
+                        textInput.name = `options[${index}][text]`;
+                        textInput.placeholder = `الخيار ${index + 1}`;
+                        isCorrectInput.name = `options[${index}][isCorrect]`;
+                    });
+                    updateRemoveButtons();
+                }
+            }
+        });
+    }
+
+    function handleImageUpload(input, previewDiv) {
+        const file = input.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('image', file);
+        // Optionally add caption if available
+        const captionInput = input.parentElement.querySelector('.image-caption');
+        if (captionInput && captionInput.value) {
+            formData.append('caption', captionInput.value);
+        }
+        fetch(`/questions/upload-image-temp`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Show preview
+                previewDiv.innerHTML = `<img src="${data.url}" alt="معاينة الصورة" style="max-width: 200px; max-height: 150px;" class="img-thumbnail mt-2">`;
+                // Add hidden input to store uploaded image URL
+                let hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'uploadedImages[]';
+                hiddenInput.value = data.url;
+                input.closest('.image-row').appendChild(hiddenInput);
+            } else {
+                previewDiv.innerHTML = `<span class='text-danger'>${data.message || 'فشل الرفع'}</span>`;
+            }
+        })
+        .catch(err => {
+            previewDiv.innerHTML = `<span class='text-danger'>خطأ في الرفع</span>`;
+        });
+    }
+    // Delegate event for all image-file inputs
+    document.getElementById('imageContainer').addEventListener('change', function(e) {
+        if (e.target.classList.contains('image-file')) {
+            const previewDiv = e.target.closest('.image-row').querySelector('.image-preview');
+            handleImageUpload(e.target, previewDiv);
+        }
+    });
+});
+</script>

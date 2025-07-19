@@ -1,0 +1,194 @@
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <!-- Student Info Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h2 class="card-title">
+                                <%= student.firstName %> <%= student.lastName %>
+                                <% if (!student.isActive) { %>
+                                    <span class="badge bg-warning">غير نشط</span>
+                                <% } %>
+                            </h2>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-envelope"></i> <%= student.email %><br>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <button class="btn btn-warning toggle-status" data-user-id="<%= student._id %>" data-current-status="<%= student.isActive %>">
+                                <i class="fas fa-<%= student.isActive ? 'ban' : 'check' %>"></i>
+                                <%= student.isActive ? 'إلغاء تنشيط' : 'تنشيط' %> الحساب
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">إجمالي الاختبارات الممتحنة</h6>
+                            <h2 class="mb-0"><%= stats.totalExams %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">متوسط الدرجات</h6>
+                            <h2 class="mb-0"><%= stats.averageScore ? stats.averageScore.toFixed(1) + '%' : 'N/A' %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">الاختبارات الناجح فيها</h6>
+                            <h2 class="mb-0"><%= stats.passedExams %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">الاختبارات الراسب فيها</h6>
+                            <h2 class="mb-0"><%= stats.failedExams %></h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Chart -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">الأداء عبر الوقت</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceChart" height="100"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Exams -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">تاريخ الاختبار</h5>
+                    <% if (examHistory.length > 0) { %>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-primary btn-sm" onclick="exportToPDF()">
+                            <i class="fas fa-file-pdf"></i> تصدير PDF
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel"></i> تصدير Excel
+                        </button>
+                    </div>
+                    <% } %>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>اسم الاختبار</th>
+                                    <th>التاريخ</th>
+                                    <th>الدرجة</th>
+                                    <th>الزمن المستغرق</th>
+                                    <th>الحالة</th>
+                                    <th>النشاطات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% examHistory.forEach(result => { %>
+                                    <tr>
+                                        <td><%= result.examId.title %></td>
+                                        <td><%= new Date(result.createdAt).toLocaleDateString() %></td>
+                                        <td>
+                                            <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                                <%= result.percentage.toFixed(1) %>%
+                                            </span>
+                                        </td>
+                                        <td><%= Math.floor(result.analytics?.timeSpent / 60) || 0 %> دقيقة</td>
+                                        <td>
+                                            <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                                <%= result.status %>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="/exams/<%= result.examId._id %>/results/<%= result._id %>" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i> عرض التفاصيل
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Performance Chart
+const ctx = document.getElementById('performanceChart').getContext('2d');
+const performanceData = JSON.parse('<%- JSON.stringify(performanceData) %>');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: performanceData.map(d => new Date(d.date).toLocaleDateString()),
+        datasets: [{
+            label: 'نتائج الاختبار',
+            data: performanceData.map(d => d.score),
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        }
+    }
+});
+
+// Toggle status functionality
+document.querySelector('.toggle-status').addEventListener('click', function() {
+    const userId = this.dataset.userId;
+    const currentStatus = this.dataset.currentStatus === 'true';
+    
+    if (confirm(`هل انت متأكد من ${currentStatus ? 'إلغاء تنشيط' : 'تنشيط'} هذا المستخدم?`)) {
+        fetch(`/admin/users/${userId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': '<%= csrfToken %>'
+            }
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Error updating user status');
+            }
+        });
+    }
+});
+
+// Export functions
+function exportToPDF() {
+    window.location.href = `/admin/users/students/<%= student._id %>/export-pdf`;
+}
+
+function exportToExcel() {
+    window.location.href = `/admin/users/students/<%= student._id %>/export-excel`;
+}
+</script>
+

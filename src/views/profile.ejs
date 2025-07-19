@@ -1,0 +1,162 @@
+<%- contentFor('body') %>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">البيانات الشخصية</h3>
+                </div>
+                <div class="card-body">
+                    <form action="/profile" method="POST" class="needs-validation" novalidate>
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h5>البيانات الأساسية</h5>
+                            <div class="mb-3">
+                                <label for="name" class="form-label">الاسم الكامل</label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="name" 
+                                       name="name" 
+                                       value="<%= user.name %>" 
+                                       required>
+                                <div class="invalid-feedback">
+                                    يرجى إدخال الاسم الكامل.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">البريد الإلكتروني</label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       value="<%= user.email %>" 
+                                       required>
+                                <div class="invalid-feedback">
+                                    يرجى إدخال بريد إلكتروني صالح.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Change Password -->
+                        <div class="mb-4">
+                            <h5>تغيير كلمة المرور</h5>
+                            <div class="mb-3">
+                                <label for="currentPassword" class="form-label">كلمة المرور الحالية</label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="currentPassword" 
+                                       name="currentPassword">
+                                <div class="form-text">
+                                    يرجى تركها فارغة إذا لم ترغب في تغيير كلمة المرور.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="newPassword" class="form-label">كلمة المرور الجديدة</label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="newPassword" 
+                                       name="newPassword"
+                                       minlength="6">
+                                <div class="invalid-feedback">
+                                    يجب أن تكون كلمة المرور على الأقل 6 أحرف.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="confirmPassword" class="form-label">تأكيد كلمة المرور الجديدة</label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="confirmPassword" 
+                                       name="confirmPassword"
+                                       minlength="6">
+                                <div class="invalid-feedback">
+                                    يجب أن تتطابق كلمتا المرور.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Information -->
+                        <div class="mb-4">
+                            <h5>بيانات الحساب</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1">
+                                        <strong>منذ:</strong><br>
+                                        <%= new Date(user.createdAt).toLocaleDateString() %>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1">
+                                        <strong>آخر تحديث:</strong><br>
+                                        <%= new Date(user.updatedAt).toLocaleDateString() %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>حفظ التعديلات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form Validation Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const newPassword = document.getElementById('newPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const currentPassword = document.getElementById('currentPassword');
+
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Check if trying to change password
+        if (newPassword.value || confirmPassword.value) {
+            if (!currentPassword.value) {
+                e.preventDefault();
+                currentPassword.setCustomValidity('يجب أن يكون كلمة المرور الحالية موجودة');
+            } else {
+                currentPassword.setCustomValidity('');
+            }
+
+            if (newPassword.value !== confirmPassword.value) {
+                e.preventDefault();
+                confirmPassword.setCustomValidity('يجب أن تتطابق كلمتا المرور');
+            } else {
+                confirmPassword.setCustomValidity('');
+            }
+        }
+
+        form.classList.add('was-validated');
+    });
+
+    // Real-time password match validation
+    [newPassword, confirmPassword].forEach(input => {
+        input.addEventListener('input', () => {
+            if (newPassword.value && confirmPassword.value) {
+                if (newPassword.value !== confirmPassword.value) {
+                    confirmPassword.setCustomValidity('يجب أن تتطابق كلمتا المرور');
+                } else {
+                    confirmPassword.setCustomValidity('');
+                }
+            }
+        });
+    });
+});
+</script> 

@@ -1,0 +1,187 @@
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <% if (typeof exam !== 'undefined' && exam) { %>
+                        الاسئلة للاختبار <%= exam.title %>
+                    <% } else { %>
+                        بنك الأسئلة
+                    <% } %>
+                </h2>
+                <% if (typeof exam !== 'undefined' && exam) { %>
+                    <a href="/exams/<%= exam._id %>" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> العودة إلى الاختبار
+                    </a>
+                <% } %>
+                <% if (user.role === 'teacher' || user.role === 'admin') { %>
+                    <div class="btn-group">
+                        <% if (typeof exam !== 'undefined' && exam) { %>
+                            <a href="/exams/<%= exam._id %>/questions/plan" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> إضافة عدة اسئلة
+                            </a>
+                            <a href="/exams/<%= exam._id %>/questions/create" class="btn btn-outline-primary">
+                                <i class="fas fa-plus"></i> إضافة سؤال واحد     
+                            </a>
+                        <% } else { %>
+                            <a href="/exams" class="btn btn-primary">
+                                <i class="fas fa-book"></i> إدارة الاختبارات
+                            </a>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+
+            <% if (typeof stats !== 'undefined' && stats) { %>
+                <!-- Statistics Cards for general question bank -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">إجمالي الأسئلة</h5>
+                                <h2><%= stats.total %></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">اختيار متعدد</h5>
+                                <h2><%= stats.mcq %></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">صح وخطأ</h5>
+                                <h2><%= stats.tf %></h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
+            <% if (questions.length === 0) { %>
+                <div class="alert alert-info">
+                    لا يوجد اسئلة مضافة لهذا الاختبار بعد.
+                </div>
+            <% } else { %>
+                <div class="list-group">
+                    <% questions.forEach((question, index) => { %>
+                        <div class="list-group-item" data-question-id="<%= question._id %>">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-1">
+                                    السؤال <%= index + 1 %>
+                                    <% if (question.images && question.images.length > 0) { %>
+                                        <span class="badge bg-info ms-2">
+                                            <i class="fas fa-image"></i> <%= question.images.length %> image<%= question.images.length > 1 ? 's' : '' %>
+                                        </span>
+                                    <% } %>
+                                </h5>
+                                <small>
+                                    نوع: <%= question.type %> | 
+                                    الدرجات: <%= question.marks %> | 
+                                    الصعوبة: <span class="badge bg-<%= 
+                                        question.difficulty === 'Easy' ? 'success' : 
+                                        question.difficulty === 'Medium' ? 'warning' : 
+                                        'danger' %>"><%= question.difficulty %></span>
+                                </small>
+                            </div>
+                            <p class="mb-1"><%= question.text %></p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small>
+                                    تم إنشاء بواسطة: <%= question.createdBy.firstName %> <%= question.createdBy.lastName %>
+                                    <% if (typeof exam === 'undefined' || !exam) { %>
+                                        | من: <%= question.examId.title %>
+                                    <% } %>
+                                    <% if (question.tags && question.tags.length > 0) { %>
+                                        | الوسوم: 
+                                        <% question.tags.forEach(tag => { %>
+                                            <span class="badge bg-secondary me-1"><%= tag %></span>
+                                        <% }); %>
+                                    <% } %>
+                                </small>
+                                <div class="btn-group">
+                                    <% if (typeof exam !== 'undefined' && exam) { %>
+                                        <a href="/exams/<%= exam._id %>/questions/<%= question._id %>" class="btn btn-sm btn-info">عرض</a>
+                                        <% if (user._id.toString() === question.createdBy._id.toString() || user.role === 'admin') { %>
+                                            <a href="/exams/<%= exam._id %>/questions/<%= question._id %>/edit" class="btn btn-sm btn-warning">تعديل</a>
+                                            <button onclick="deleteQuestion('<%= exam._id %>', '<%= question._id %>', '<%= csrfToken %>')" class="btn btn-sm btn-danger">حذف</button>
+                                        <% } %>
+                                    <% } else { %>
+                                        <a href="/exams/<%= question.examId._id %>/questions/<%= question._id %>" class="btn btn-sm btn-info">عرض</a>
+                                        <% if (user._id.toString() === question.createdBy._id.toString() || user.role === 'admin') { %>
+                                            <a href="/exams/<%= question.examId._id %>/questions/<%= question._id %>/edit" class="btn btn-sm btn-warning">تعديل</a>
+                                            <button onclick="deleteQuestion('<%= question.examId._id %>', '<%= question._id %>', '<%= csrfToken %>')" class="btn btn-sm btn-danger">حذف</button>
+                                        <% } %>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Add SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+async function deleteQuestion(examId, questionId, csrfToken) {
+    try {
+        // Show confirmation dialog
+        const result = await Swal.fire({
+            title: 'هل أنت متأكد؟',
+            text: "سيتم حذف هذا السؤال بشكل دائم!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'نعم, حذفه!'
+        });
+
+        if (result.isConfirmed) {
+            // Send delete request
+            const response = await fetch(`/exams/${examId}/questions/${questionId}`, {
+                method: 'DELETE',
+                headers: {
+                    'CSRF-Token': csrfToken
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Show success message
+                await Swal.fire(
+                    'تم حذفه!',
+                    'تم حذف السؤال.',
+                    'success'
+                );
+                // Remove the question from the DOM
+                const questionElement = document.querySelector(`[data-question-id="${questionId}"]`);
+                if (questionElement) {
+                    questionElement.remove();
+                } else {
+                    // If we can't find the element, reload the page
+                    window.location.reload();
+                }
+            } else {
+                throw new Error(data.message || 'Failed to delete question');
+            }
+        }
+    } catch (error) {
+        console.error('Error deleting question:', error);
+        Swal.fire(
+            'خطأ!',
+            error.message || 'فشل حذف السؤال',
+            'error'
+        );
+    }
+}
+</script>
+
+
