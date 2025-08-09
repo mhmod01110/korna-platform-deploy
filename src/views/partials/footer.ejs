@@ -5,9 +5,11 @@
                 <h5>من نحن</h5>
                 <p>كورنا-ميستري , منصة تعليمية شاملة من قلب الوادي الجديد</p>
                 <div class="social-links">
-                    <a href="https://www.facebook.com/mahmoud.shawqi.52" class="ms-2"><i class="fab fa-facebook"></i></a>
-                    <a href="https://www.linkedin.com/in/mhmod01110/" class="ms-2"><i class="fab fa-linkedin"></i></a>
-                    <a href="https://wa.me/201012482107" class="ms-2"><i class="fab fa-whatsapp"></i></a>  
+                    <a href="https://www.facebook.com/share/16xPHGqydT/" target="_blank" class="ms-2"><i class="fab fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/mohamed_nasr_korna/profilecard/?igsh=eDhncTlnZXp4dHhu" target="_blank" class="ms-2"><i class="fab fa-instagram"></i></a>
+                    <a href="https://www.youtube.com/@kornamistry25" target="_blank" class="ms-2"><i class="fab fa-youtube"></i></a>
+                    <a href="http://tiktok.com/@kornamistry" target="_blank" class="ms-2"><i class="fab fa-tiktok"></i></a>
+                    <a href="https://wa.me/201091897519" target="_blank" class="ms-2"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
             <div class="col-md-4 mb-3">
@@ -22,9 +24,8 @@
             <div class="col-md-4">
                 <h5>معلومات الاتصال</h5>
                 <ul class="list-unstyled">
-                    <li><i class="fas fa-map-marker-alt ms-2"></i>مصر، القاهرة</li>
-                    <li><i class="fas fa-phone ms-2"></i>٢٠١٠١٢٤٨٢١٠٧+</li>
-                    <li><i class="fas fa-envelope ms-2"></i>mhmod.mhmod01110@gmail.com</li>
+                    <li><i class="fas fa-map-marker-alt ms-2"></i>   مصر، القاهرة </li>
+                    <li><i class="fas fa-phone ms-2"></i>   ٠١٠٩١٨٩٧٥١٩+   </li>
                 </ul>
             </div>
         </div>
@@ -51,22 +52,52 @@
 
 .footer .social-links a {
     transition: all 0.3s ease;
-    display: inline-block;
-    padding: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     border-radius: 50%;
     width: 40px;
     height: 40px;
     text-align: center;
-    line-height: 30px;
     margin-right: 0.5rem;
     background: rgba(255, 255, 255, 0.1);
-    color: white !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    text-decoration: none;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 1rem;
 }
 
 .footer .social-links a:hover {
-    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
     color: white !important;
-    transform: translateY(-3px);
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.footer .social-links a[href*="facebook"]:hover {
+    background: #1877f2 !important;
+    border-color: #1877f2;
+}
+
+.footer .social-links a[href*="instagram"]:hover {
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+    border-color: #e6683c;
+}
+
+.footer .social-links a[href*="youtube"]:hover {
+    background: #ff0000 !important;
+    border-color: #ff0000;
+}
+
+.footer .social-links a[href*="tiktok"]:hover {
+    background: #000000 !important;
+    border-color: #ff0050;
+}
+
+.footer .social-links a[href*="wa.me"]:hover {
+    background: #25d366 !important;
+    border-color: #25d366;
 }
 
 .footer h5 {
@@ -95,9 +126,14 @@
     }
     
     .footer .social-links a {
-        width: 35px;
-        height: 35px;
-        line-height: 25px;
+        width: 38px;
+        height: 38px;
+        font-size: 0.95rem;
+        margin-right: 0.4rem;
+    }
+    
+    .footer .social-links a:hover {
+        transform: translateY(-2px) scale(1.05);
     }
 }
 </style> 

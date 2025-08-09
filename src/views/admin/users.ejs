@@ -9,7 +9,12 @@
                     <!-- Tabs -->
                     <ul class="nav nav-tabs mb-4" id="userTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab">
+                            <button class="nav-link active" id="all-users-tab" data-bs-toggle="tab" data-bs-target="#all-users" type="button" role="tab">
+                                جميع المستخدمين
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab">
                                 الطلاب
                             </button>
                         </li>
@@ -22,14 +27,72 @@
 
                     <!-- Tab Content -->
                     <div class="tab-content" id="userTabsContent">
+                        <!-- All Users Tab -->
+                        <div class="tab-pane fade show active" id="all-users" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>الاسم</th>
+                                            <th>البريد الإلكتروني</th>
+                                            <th>رقم الهاتف</th>
+                                            <th>رقم هاتف ولي الأمر</th>
+                                            <th>الدور</th>
+                                            <th>الحالة</th>
+                                            <th>تاريخ التسجيل</th>
+                                            <th>النشاطات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% (students.concat(staff)).forEach(user => { %>
+                                            <tr>
+                                                <td><%= user.firstName %> <%= user.lastName %></td>
+                                                <td><%= user.email %></td>
+                                                <td><%= user.phoneNumber || 'غير مدخل' %></td>
+                                                <td><%= user.parentPhoneNumber || 'غير مدخل' %></td>
+                                                <td>
+                                                    <span class="badge bg-<%= user.role === 'admin' ? 'danger' : user.role === 'teacher' ? 'primary' : 'info' %>">
+                                                        <%= user.role === 'admin' ? 'أدمن' : user.role === 'teacher' ? 'معلم' : 'طالب' %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-<%= user.isActive ? 'success' : 'warning' %>">
+                                                        <%= user.isActive ? 'نشط' : 'غير نشط' %>
+                                                    </span>
+                                                </td>
+                                                <td><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <% if (user.role === 'student') { %>
+                                                            <a href="/admin/users/students/<%= user._id %>" class="btn btn-info">
+                                                                <i class="fas fa-chart-line"></i> عرض التقدم
+                                                            </a>
+                                                        <% } %>
+                                                        <% if (user.role !== 'admin') { %>
+                                                            <button class="btn btn-warning toggle-status" data-user-id="<%= user._id %>" data-current-status="<%= user.isActive %>">
+                                                                <i class="fas fa-<%= user.isActive ? 'ban' : 'check' %>"></i>
+                                                                <%= user.isActive ? 'إلغاء تنشيط' : 'تنشيط' %>
+                                                            </button>
+                                                        <% } %>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% }) %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                         <!-- Students Tab -->
-                        <div class="tab-pane fade show active" id="students" role="tabpanel">
+                        <div class="tab-pane fade" id="students" role="tabpanel">
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
                                             <th>الاسم</th>
                                             <th>البريد الالكتروني</th>
+                                            <th>رقم الهاتف</th>
+                                            <th>رقم هاتف ولي الأمر</th>
                                             <th>الاختبارات الممتحنة</th>
                                             <th>متوسط الدرجات</th>
                                             <th>النشاطات</th>
@@ -45,6 +108,8 @@
                                                     <% } %>
                                                 </td>
                                                 <td><%= student.email %></td>
+                                                <td><%= student.phoneNumber || 'غير مدخل' %></td>
+                                                <td><%= student.parentPhoneNumber || 'غير مدخل' %></td>
                                                 <td><%= student.examCount %></td>
                                                 <td>
                                                     <% if (student.averageScore) { %>
@@ -86,6 +151,8 @@
                                         <tr>
                                             <th>الاسم</th>
                                             <th>البريد الالكتروني</th>
+                                            <th>رقم الهاتف</th>
+                                            <th>رقم هاتف ولي الأمر</th>
                                             <th>الدور</th>
                                             <th>الحالة</th>
                                             <th>النشاطات</th>
@@ -96,6 +163,8 @@
                                             <tr>
                                                 <td><%= member.firstName %> <%= member.lastName %></td>
                                                 <td><%= member.email %></td>
+                                                <td><%= member.phoneNumber || 'غير مدخل' %></td>
+                                                <td><%= member.parentPhoneNumber || 'غير مدخل' %></td>
                                                 <td>
                                                     <span class="badge bg-<%= member.role === 'admin' ? 'danger' : 'primary' %>">
                                                         <%= member.role %>
@@ -158,6 +227,16 @@
                     <div class="mb-3">
                         <label class="form-label">البريد الالكتروني</label>
                         <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم الهاتف</label>
+                        <input type="tel" class="form-control" name="phoneNumber" 
+                               pattern="^01[0-9]{9}$" placeholder="01xxxxxxxxx" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم هاتف ولي الأمر</label>
+                        <input type="tel" class="form-control" name="parentPhoneNumber" 
+                               pattern="^01[0-9]{9}$" placeholder="01xxxxxxxxx" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">كلمة المرور</label>

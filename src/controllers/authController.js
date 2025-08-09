@@ -84,26 +84,57 @@ exports.getRegister = (req, res) => {
 };
 exports.postRegister = async (req, res, next) => {
     try {
-        const { firstName, lastName, email, password, confirmPassword, role } = req.body;
+        const { firstName, lastName, email, phoneNumber, parentPhoneNumber, password, confirmPassword, role } = req.body;
         
         // Check if passwords match
         if (password !== confirmPassword) {
-            req.flash('error', 'Passwords do not match');
+            req.flash('error', 'كلمتا المرور غير متطابقتين');
             return res.render('auth/register', {
                 title: 'إنشاء حساب',
                 error: req.flash('error'),
-                oldInput: { firstName, lastName, email, role }
+                oldInput: { firstName, lastName, email, phoneNumber, parentPhoneNumber, role }
+            });
+        }
+        
+        // Validate phone numbers
+        const phoneRegex = /^01[0-9]{9}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            req.flash('error', 'يجب أن يتكون رقم الهاتف من 11 رقم ويبدأ بـ 01');
+            return res.render('auth/register', {
+                title: 'إنشاء حساب',
+                error: req.flash('error'),
+                oldInput: { firstName, lastName, email, phoneNumber, parentPhoneNumber, role }
+            });
+        }
+        
+        if (!phoneRegex.test(parentPhoneNumber)) {
+            req.flash('error', 'يجب أن يتكون رقم هاتف ولي الأمر من 11 رقم ويبدأ بـ 01');
+            return res.render('auth/register', {
+                title: 'إنشاء حساب',
+                error: req.flash('error'),
+                oldInput: { firstName, lastName, email, phoneNumber, parentPhoneNumber, role }
             });
         }
         
         // Check if user exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            req.flash('error', 'Email already registered');
+            req.flash('error', 'البريد الإلكتروني مسجل مسبقاً');
             return res.render('auth/register', {
                 title: 'إنشاء حساب', 
                 error: req.flash('error'),
-                oldInput: { firstName, lastName, email, role }
+                oldInput: { firstName, lastName, email, phoneNumber, parentPhoneNumber, role }
+            });
+        }
+        
+        // Check if phone number exists
+        const existingPhoneUser = await User.findOne({ phoneNumber });
+        if (existingPhoneUser) {
+            req.flash('error', 'رقم الهاتف مسجل مسبقاً');
+            return res.render('auth/register', {
+                title: 'إنشاء حساب', 
+                error: req.flash('error'),
+                oldInput: { firstName, lastName, email, phoneNumber, parentPhoneNumber, role }
             });
         }
         
@@ -112,20 +143,22 @@ exports.postRegister = async (req, res, next) => {
             firstName,
             lastName,
             email,
+            phoneNumber,
+            parentPhoneNumber,
             password,
             role
         });
         
         await user.save();
         
-        req.flash('success', 'Registration successful. Please login.');
+        req.flash('success', 'تم إنشاء الحساب بنجاح. يرجى تسجيل الدخول.');
         res.redirect('/auth/login');
     } catch (error) {
         req.flash('error', error.message);
         res.render('auth/register', {
             title: 'إنشاء حساب',
             error: req.flash('error'),
-            oldInput: { name, email, role },
+            oldInput: { firstName, lastName, email, phoneNumber, parentPhoneNumber, role },
             csrfToken: req.csrfToken()
         });
     }

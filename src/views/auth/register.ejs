@@ -21,6 +21,7 @@
                                    class="form-control" 
                                    id="firstName" 
                                    name="firstName" 
+                                   value="<%= typeof oldInput !== 'undefined' && oldInput.firstName ? oldInput.firstName : '' %>"
                                    required 
                                    autofocus>
                             <div class="invalid-feedback">
@@ -34,6 +35,7 @@
                                    class="form-control" 
                                    id="lastName" 
                                    name="lastName" 
+                                   value="<%= typeof oldInput !== 'undefined' && oldInput.lastName ? oldInput.lastName : '' %>"
                                    required>
                             <div class="invalid-feedback">
                                 يرجى إدخال اسم العائلة.
@@ -46,9 +48,42 @@
                                    class="form-control" 
                                    id="email" 
                                    name="email" 
+                                   value="<%= typeof oldInput !== 'undefined' && oldInput.email ? oldInput.email : '' %>"
                                    required>
                             <div class="invalid-feedback">
                                 يرجى إدخال بريد إلكتروني صحيح.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="phoneNumber" class="form-label">رقم الهاتف</label>
+                            <input type="tel" 
+                                   class="form-control" 
+                                   id="phoneNumber" 
+                                   name="phoneNumber" 
+                                   value="<%= typeof oldInput !== 'undefined' && oldInput.phoneNumber ? oldInput.phoneNumber : '' %>"
+                                   pattern="^01[0-9]{9}$"
+                                   placeholder="01xxxxxxxxx"
+                                   maxlength="11"
+                                   required>
+                            <div class="invalid-feedback">
+                                يجب أن يتكون رقم الهاتف من 11 رقم ويبدأ بـ 01.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="parentPhoneNumber" class="form-label">رقم هاتف ولي الأمر</label>
+                            <input type="tel" 
+                                   class="form-control" 
+                                   id="parentPhoneNumber" 
+                                   name="parentPhoneNumber" 
+                                   value="<%= typeof oldInput !== 'undefined' && oldInput.parentPhoneNumber ? oldInput.parentPhoneNumber : '' %>"
+                                   pattern="^01[0-9]{9}$"
+                                   placeholder="01xxxxxxxxx"
+                                   maxlength="11"
+                                   required>
+                            <div class="invalid-feedback">
+                                يجب أن يتكون رقم هاتف ولي الأمر من 11 رقم ويبدأ بـ 01.
                             </div>
                         </div>
                         
@@ -81,7 +116,7 @@
                         <div class="mb-3">
                             <label for="role" class="form-label">نوع الحساب</label>
                             <select class="form-select" id="role" name="role" required>
-                                <option value="student">طالب</option>
+                                <option value="student" <%= typeof oldInput !== 'undefined' && oldInput.role === 'student' ? 'selected' : '' %>>طالب</option>
                                 <!-- <option value="admin">مدير</option>
                                 <option value="teacher">معلم</option>     -->
                             </select>

@@ -39,6 +39,36 @@
                                     يرجى إدخال بريد إلكتروني صالح.
                                 </div>
                             </div>
+
+                            <div class="mb-3">
+                                <label for="phoneNumber" class="form-label">رقم الهاتف</label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="phoneNumber" 
+                                       name="phoneNumber" 
+                                       value="<%= user.phoneNumber || '' %>" 
+                                       pattern="^01[0-9]{9}$"
+                                       placeholder="01xxxxxxxxx"
+                                       required>
+                                <div class="invalid-feedback">
+                                    يجب أن يتكون رقم الهاتف من 11 رقم ويبدأ بـ 01.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="parentPhoneNumber" class="form-label">رقم هاتف ولي الأمر</label>
+                                <input type="tel" 
+                                       class="form-control" 
+                                       id="parentPhoneNumber" 
+                                       name="parentPhoneNumber" 
+                                       value="<%= user.parentPhoneNumber || '' %>" 
+                                       pattern="^01[0-9]{9}$"
+                                       placeholder="01xxxxxxxxx"
+                                       required>
+                                <div class="invalid-feedback">
+                                    يجب أن يتكون رقم هاتف ولي الأمر من 11 رقم ويبدأ بـ 01.
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Change Password -->

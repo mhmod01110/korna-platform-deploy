@@ -26,6 +26,16 @@ const userSchema = new mongoose.Schema({
         minlength: [6, 'Password must be at least 6 characters long'],
         select: false  // Don't include password by default in queries
     },
+    phoneNumber: {
+        type: String,
+        required: [true, 'Phone number is required'],
+        match: [/^01[0-9]{9}$/, 'Phone number must be 11 digits starting with 01']
+    },
+    parentPhoneNumber: {
+        type: String,
+        required: [true, 'Parent phone number is required'],
+        match: [/^01[0-9]{9}$/, 'Parent phone number must be 11 digits starting with 01']
+    },
     role: {
         type: String,
         enum: ['student', 'teacher', 'admin'],

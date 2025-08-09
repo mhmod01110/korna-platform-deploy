@@ -119,6 +119,10 @@ app.use((req, res, next) => {
     next();
 });
 
+// Breadcrumb middleware
+const { breadcrumbMiddleware } = require('./src/utils/breadcrumbHelper');
+app.use(breadcrumbMiddleware);
+
 // Routes
 const authRoutes = require("./src/routes/authRoutes");
 const examRoutes = require("./src/routes/examRoutes");
