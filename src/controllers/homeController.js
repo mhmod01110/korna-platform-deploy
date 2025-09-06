@@ -181,9 +181,7 @@ exports.getHome = async (req, res) => {
                     as: 'studentInfo'
                 }
             },
-            {
-                $unwind: '$studentInfo'
-            },
+            { $unwind: '$studentInfo' },
             {
                 $match: {
                     'studentInfo.role': 'student'
@@ -201,14 +199,14 @@ exports.getHome = async (req, res) => {
             },
             {
                 $sort: {
-                    // examCount: -1,
-                    totalScore: -1
+                    totalScore: -1,  // primary sort
+                    examCount: -1,   // secondary sort (optional)
+                    _id: 1           // final tiebreaker for stability
                 }
             },
-            {
-                $limit: 5
-            }
+            { $limit: 5 }
         ]);
+
 
         return res.render('index', {
             title: 'لوحة التحكم',
