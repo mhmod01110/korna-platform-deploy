@@ -81,17 +81,14 @@ const examSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    showResults: {
-        type: Boolean,
-        default: true
-    },
-    resultReleaseDate: {
-        type: Date,
-        default: function() {
-            const date = new Date();
-            date.setMonth(date.getMonth() + 7);
-            return date;
-        }
+    resultDisplayOption: {
+        type: String,
+        enum: {
+            values: ['HIDE_RESULTS', 'SHOW_SCORE_ONLY', 'SHOW_FULL_DETAILS'],
+            message: "{VALUE} is not a valid result display option"
+        },
+        default: 'SHOW_FULL_DETAILS',
+        required: [true, "Result display option is required"]
     },
     instructions: {
         type: String,

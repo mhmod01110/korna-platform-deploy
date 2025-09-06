@@ -39,8 +39,8 @@ router.post('/:id/attempt/:attemptId/grade', isAuth, isTeacher, examController.g
 // View detailed exam result
 router.get('/:examId/results/:resultId', isAuth, examController.getExamResultDetails);
 
-// Release exam results
-router.post('/:id/release-results', isAuth, isTeacher, examController.releaseResults);
+// Update result display option
+router.post('/:id/update-result-display', isAuth, isTeacher, examController.updateResultDisplayOption);
 
 // Submission review route (for teachers)
 router.get('/:examId/submissions/:submissionId', isAuth, isTeacher, examController.getSubmissionDetails);

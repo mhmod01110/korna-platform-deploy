@@ -221,7 +221,7 @@ exports.getResults = async (req, res) => {
         })
         .populate({
             path: 'examId',
-            select: 'title department type',
+            select: 'title department type resultDisplayOption',
             populate: {
                 path: 'department',
                 select: 'name'
@@ -229,9 +229,14 @@ exports.getResults = async (req, res) => {
         })
         .sort({ createdAt: -1 });
 
+        // Filter results based on display options - only show results that are not hidden
+        const visibleResults = results.filter(result => 
+            result.examId.resultDisplayOption !== 'HIDE_RESULTS'
+        );
+
         res.render('exam/results', {
             title: 'نتائجي',
-            results
+            results: visibleResults
         });
     } catch (error) {
         console.error('Results error:', error);

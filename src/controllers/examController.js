@@ -111,7 +111,6 @@ exports.postCreateExam = async (req, res) => {
             ...req.body,
             isPublic: req.body.isPublic === 'on',
             shuffleQuestions: req.body.shuffleQuestions === 'on',
-            showResults: req.body.showResults === 'on',
             createdBy: req.user._id,
             questions: [] // Start with empty questions array
         };
@@ -273,7 +272,6 @@ exports.postEditExam = async (req, res) => {
         const formData = {
             ...req.body,
             shuffleQuestions: req.body.shuffleQuestions === 'on',
-            showResults: req.body.showResults === 'on',
             isPublic: req.body.isPublic === 'on'
         };
         
@@ -897,25 +895,10 @@ exports.getExamResultDetails = async (req, res) => {
         // 1. The student who took the exam
         // 2. Admin
         // 3. Teacher who created the exam
-        // 4. Results have been released
         if (result.studentId._id.toString() !== req.user._id.toString() && 
             req.user.role !== 'admin' && 
             result.examId.createdBy.toString() !== req.user._id.toString()) {
-            
-            if (!result.isReleased) {
-                req.flash('error', 'Results have not been released yet');
-                return res.redirect('/exams');
-            }
-
             req.flash('error', 'Not authorized to view these results');
-            return res.redirect('/exams');
-        }
-
-        // If student is viewing and results are not released yet
-        if (result.studentId._id.toString() === req.user._id.toString() && 
-            !result.isReleased && 
-            req.user.role === 'student') {
-            req.flash('error', 'Results have not been released yet');
             return res.redirect('/exams');
         }
 
@@ -933,8 +916,8 @@ exports.getExamResultDetails = async (req, res) => {
             return res.redirect('/exams');
         }
 
-        // Check if results are hidden for this exam
-        if (!exam.showResults && req.user.role === 'student') {
+        // Check result display options for students
+        if (req.user.role === 'student' && exam.resultDisplayOption === 'HIDE_RESULTS') {
             req.flash('error', 'Results are not available for this exam');
             return res.redirect('/exams');
         }
@@ -1082,8 +1065,8 @@ exports.getSubmissionDetails = async (req, res) => {
     }
 }; 
 
-// Release exam results
-exports.releaseResults = async (req, res) => {
+// Update exam result display option
+exports.updateResultDisplayOption = async (req, res) => {
     try {
         const exam = await Exam.findById(req.params.id);
         
@@ -1094,29 +1077,38 @@ exports.releaseResults = async (req, res) => {
             });
         }
         
-        // Check if user is authorized to release results
+        // Check if user is authorized to update result display
         if (exam.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
             return res.status(403).json({
                 success: false,
-                message: 'Not authorized to release results for this exam'
+                message: 'Not authorized to update result display for this exam'
             });
         }
 
-        // Update all results for this exam to be released
-        await Result.updateMany(
-            { examId: exam._id },
-            { isReleased: true }
-        );
+        const { resultDisplayOption } = req.body;
+        
+        // Validate the option
+        if (!['HIDE_RESULTS', 'SHOW_SCORE_ONLY', 'SHOW_FULL_DETAILS'].includes(resultDisplayOption)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid result display option'
+            });
+        }
+
+        // Update the exam
+        exam.resultDisplayOption = resultDisplayOption;
+        await exam.save();
         
         return res.json({
             success: true,
-            message: 'Results released successfully'
+            message: 'Result display option updated successfully',
+            resultDisplayOption: resultDisplayOption
         });
     } catch (error) {
-        console.error('Error in releaseResults:', error);
+        console.error('Error in updateResultDisplayOption:', error);
         return res.status(500).json({
             success: false,
-            message: 'Error releasing results'
+            message: 'Error updating result display option'
         });
     }
 }; 
