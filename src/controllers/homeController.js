@@ -57,29 +57,33 @@ exports.getHome = async (req, res) => {
         
             // Get recent results
             const recentResults = await Result.find({
-                studentId: req.session.user._id,
-                // isReleased: true // Only released results/
+                studentId: req.session.user._id
             })
-            .populate('examId', 'title showResults')
+            .populate('examId', 'title resultDisplayOption')
             .sort({ submittedAt: -1 })
             .limit(5)
             .lean();
+
+            // Filter results based on display options - only show results that are not hidden
+            const visibleResults = recentResults.filter(result => 
+                result.examId.resultDisplayOption !== 'HIDE_RESULTS'
+            );
         
             // Format results
-            const formattedResults = recentResults.map(result => ({
+            const formattedResults = visibleResults.map(result => ({
                 ...result,
                 examTitle: result.examId.title
             }));
 
             // For each department, determine student's level
             const departmentsWithLevels = await Promise.all(departments.map(async department => {
-                // Find the latest released result for this department
+                // Find the latest result for this department
                 const latestResult = await Result.findOne({
                     studentId: req.session.user._id,
-                    isReleased: true,
                     status: { $in: ['PASS', 'FAIL'] },
                     examId: { $in: department.exams.map(exam => exam._id) }
                 })
+                .populate('examId', 'resultDisplayOption')
                 .sort({ createdAt: -1 })
                 .lean();
 
@@ -161,7 +165,6 @@ exports.getHome = async (req, res) => {
        const topStudents = await Result.aggregate([
         {
             $match: {
-                isReleased: true,
                 status: { $in: ['PASS', 'FAIL'] }
             }
         },
