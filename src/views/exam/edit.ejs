@@ -139,18 +139,6 @@
                                 يجب أن تكون المحاولات القصوى على الأقل 1.
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="resultReleaseDate" class="form-label">تاريخ إصدار النتائج والوقت</label>
-                            <input type="datetime-local" 
-                                   class="form-control" 
-                                   id="resultReleaseDate" 
-                                   name="resultReleaseDate"
-                                   value="<%= exam.resultReleaseDate ? new Date(exam.resultReleaseDate).toISOString().slice(0, 16) : '' %>"
-                                   required>
-                            <div class="form-text">
-                                يرجى تركه فارغاً لإصدار النتائج مباشرة بعد التقديم.
-                            </div>
-                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -167,15 +155,14 @@
                     </div>
 
                     <div class="mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" 
-                                   class="form-check-input" 
-                                   id="showResults" 
-                                   name="showResults"
-                                   <%= exam.showResults ? 'checked' : '' %>>
-                            <label class="form-check-label" for="showResults">
-                                عرض النتائج للطلاب
-                            </label>
+                        <label for="resultDisplayOption" class="form-label">خيارات عرض النتائج للطلاب</label>
+                        <select class="form-select" id="resultDisplayOption" name="resultDisplayOption" required>
+                            <option value="HIDE_RESULTS" <%= exam.resultDisplayOption === 'HIDE_RESULTS' ? 'selected' : '' %>>عدم اظهار النتيجة للطالب</option>
+                            <option value="SHOW_SCORE_ONLY" <%= exam.resultDisplayOption === 'SHOW_SCORE_ONLY' ? 'selected' : '' %>>اظهار فقط النتيجة النهائية للطالب</option>
+                            <option value="SHOW_FULL_DETAILS" <%= exam.resultDisplayOption === 'SHOW_FULL_DETAILS' ? 'selected' : '' %>>اظهار النتيجة و تفاصيل الاجابات للطالب</option>
+                        </select>
+                        <div class="form-text">
+                            اختر كيفية عرض النتائج للطلاب بعد انتهاء الاختبار.
                         </div>
                     </div>
 

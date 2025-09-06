@@ -79,10 +79,6 @@ const resultSchema = new mongoose.Schema({
         },
         required: [true, "Status is required"]
     },
-    isReleased: {
-        type: Boolean,
-        default: false
-    },
     questionResults: [questionResultSchema],
     evaluatedBy: {
         type: mongoose.Schema.Types.ObjectId,

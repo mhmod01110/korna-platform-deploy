@@ -1,0 +1,103 @@
+<%# This component shows result display option controls for exams %>
+<% if ((user.role === 'admin' || user.role === 'teacher') && (exam.createdBy._id.toString() === user._id.toString() || user.role === 'admin')) { %>
+    <div class="result-display-controls" data-exam-id="<%= exam._id %>">
+        <div class="dropdown">
+            <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-eye me-2"></i>عرض النتائج
+            </button>
+            <ul class="dropdown-menu">
+                <li>
+                    <button class="dropdown-item <%= exam.resultDisplayOption === 'HIDE_RESULTS' ? 'active' : '' %>" 
+                            onclick="updateResultDisplay('<%= exam._id %>', 'HIDE_RESULTS')">
+                        <i class="fas fa-eye-slash me-2"></i>عدم اظهار النتيجة للطالب
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item <%= exam.resultDisplayOption === 'SHOW_SCORE_ONLY' ? 'active' : '' %>" 
+                            onclick="updateResultDisplay('<%= exam._id %>', 'SHOW_SCORE_ONLY')">
+                        <i class="fas fa-chart-bar me-2"></i>اظهار فقط النتيجة النهائية للطالب
+                    </button>
+                </li>
+                <li>
+                    <button class="dropdown-item <%= exam.resultDisplayOption === 'SHOW_FULL_DETAILS' ? 'active' : '' %>" 
+                            onclick="updateResultDisplay('<%= exam._id %>', 'SHOW_FULL_DETAILS')">
+                        <i class="fas fa-list-alt me-2"></i>اظهار النتيجة و تفاصيل الاجابات للطالب
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <small class="text-muted mt-1 d-block">
+            الحالي: 
+            <% if (exam.resultDisplayOption === 'HIDE_RESULTS') { %>
+                عدم اظهار النتيجة
+            <% } else if (exam.resultDisplayOption === 'SHOW_SCORE_ONLY') { %>
+                النتيجة النهائية فقط
+            <% } else { %>
+                النتيجة والتفاصيل
+            <% } %>
+        </small>
+    </div>
+
+    <script>
+        async function updateResultDisplay(examId, option) {
+            const optionNames = {
+                'HIDE_RESULTS': 'عدم اظهار النتيجة للطالب',
+                'SHOW_SCORE_ONLY': 'اظهار فقط النتيجة النهائية للطالب', 
+                'SHOW_FULL_DETAILS': 'اظهار النتيجة و تفاصيل الاجابات للطالب'
+            };
+            
+            if (!confirm(`هل أنت متأكد من تغيير خيار عرض النتائج إلى: ${optionNames[option]}؟`)) return;
+            
+            try {
+                const response = await fetch(`/exams/${examId}/update-result-display`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ resultDisplayOption: option })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message
+                    showAlert('success', 'تم تحديث خيار عرض النتائج بنجاح');
+                    // Reload page to show updated status
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    throw new Error(data.message || 'خطأ في تحديث خيار عرض النتائج');
+                }
+            } catch (error) {
+                showAlert('error', error.message || 'خطأ في تحديث خيار عرض النتائج');
+            }
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // Insert alert at the top of the main content
+            const mainContent = document.querySelector('main');
+            if (mainContent) {
+                mainContent.insertBefore(alertDiv, mainContent.firstChild);
+            } else {
+                // Fallback - insert at top of container
+                const container = document.querySelector('.container');
+                if (container) {
+                    container.insertBefore(alertDiv, container.firstChild);
+                }
+            }
+            
+            // Auto dismiss after 3 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+    </script>
+<% } %>

@@ -133,17 +133,6 @@
                                 يجب أن تكون المحاولات القصوى على الأقل 1.
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="resultReleaseDate" class="form-label">تاريخ إصدار النتائج والوقت</label>
-                            <input type="datetime-local" 
-                                   class="form-control" 
-                                   id="resultReleaseDate" 
-                                   name="resultReleaseDate"
-                                   required>
-                            <div class="form-text">
-                                يرجى تحديد تاريخ إصدار النتائج للطلاب.
-                            </div>
-                        </div>
                     </div>
 
                     <div class="mb-3 mcq-only-setting">
@@ -160,15 +149,14 @@
                     </div>
 
                     <div class="mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" 
-                                   class="form-check-input" 
-                                   id="showResults" 
-                                   name="showResults" 
-                                   checked>
-                            <label class="form-check-label" for="showResults">
-                                عرض النتائج للطلاب
-                            </label>
+                        <label for="resultDisplayOption" class="form-label">خيارات عرض النتائج للطلاب</label>
+                        <select class="form-select" id="resultDisplayOption" name="resultDisplayOption" required>
+                            <option value="HIDE_RESULTS">عدم اظهار النتيجة للطالب</option>
+                            <option value="SHOW_SCORE_ONLY">اظهار فقط النتيجة النهائية للطالب</option>
+                            <option value="SHOW_FULL_DETAILS" selected>اظهار النتيجة و تفاصيل الاجابات للطالب</option>
+                        </select>
+                        <div class="form-text">
+                            اختر كيفية عرض النتائج للطلاب بعد انتهاء الاختبار.
                         </div>
                     </div>
 
@@ -251,7 +239,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('startDate').value = formatDate(now);
     document.getElementById('endDate').value = formatDate(sixMonthsLater);
-    document.getElementById('resultReleaseDate').value = formatDate(sixMonthsLater);
     
     // Handle exam type changes
     const typeSelect = document.getElementById('type');
