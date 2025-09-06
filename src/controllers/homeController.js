@@ -201,7 +201,7 @@ exports.getHome = async (req, res) => {
             },
             {
                 $sort: {
-                    examCount: -1,
+                    // examCount: -1,
                     totalScore: -1
                 }
             },
