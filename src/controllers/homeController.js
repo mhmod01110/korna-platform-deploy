@@ -158,54 +158,53 @@ exports.getHome = async (req, res) => {
         }
 
         // Get top 5 students for Hall of Fame
-        const topStudents = await Result.aggregate([
-            {
-                $match: {
-                    isReleased: true,
-                    status: { $in: ['PASS', 'FAIL'] }
-                }
-            },
-            {
-                $group: {
-                    _id: '$studentId',
-                    examCount: { $sum: 1 },
-                    totalScore: { $sum: '$totalMarks' },
-                    averageScore: { $avg: '$totalMarks' }
-                }
-            },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: '_id',
-                    foreignField: '_id',
-                    as: 'studentInfo'
-                }
-            },
-            { $unwind: '$studentInfo' },
-            {
-                $match: {
-                    'studentInfo.role': 'student'
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    firstName: '$studentInfo.firstName',
-                    lastName: '$studentInfo.lastName',
-                    examCount: 1,
-                    totalScore: 1,
-                    averageScore: 1
-                }
-            },
-            {
-                $sort: {
-                    totalScore: -1,  // primary sort
-                    examCount: -1,   // secondary sort (optional)
-                    _id: 1           // final tiebreaker for stability
-                }
-            },
-            { $limit: 5 }
-        ]);
+       const topStudents = await Result.aggregate([
+        {
+            $match: {
+                isReleased: true,
+                status: { $in: ['PASS', 'FAIL'] }
+            }
+        },
+        {
+            $group: {
+                _id: '$studentId',
+                examCount: { $sum: 1 },
+                totalScore: { $sum: '$totalMarks' },
+                averageScore: { $avg: '$totalMarks' }
+            }
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'studentInfo'
+            }
+        },
+        { $unwind: '$studentInfo' },
+        {
+            $match: {
+                'studentInfo.role': 'student'
+            }
+        },
+        {
+            $project: {
+                _id: 1,
+                firstName: '$studentInfo.firstName',
+                lastName: '$studentInfo.lastName',
+                examCount: 1,
+                totalScore: 1,
+                averageScore: 1
+            }
+        },
+        {
+            $sort: {
+                totalScore: -1,  // main criterion: highest total score
+                _id: 1           // tiebreaker for stable results
+            }
+        },
+        { $limit: 5 }
+    ]);
 
 
         return res.render('index', {
