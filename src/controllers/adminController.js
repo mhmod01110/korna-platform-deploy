@@ -42,9 +42,27 @@ exports.getDashboard = async (req, res, next) => {
 // User Management
 exports.getUsers = async (req, res) => {
     try {
-        // Get students with exam stats
-        const students = await User.aggregate([
-            { $match: { role: 'student' } },
+        const page = parseInt(req.query.page) || 1;
+        const limit = 20;
+        const skip = (page - 1) * limit;
+        const search = req.query.search || '';
+
+        // Build search conditions
+        let searchConditions = {};
+        if (search) {
+            searchConditions = {
+                $or: [
+                    { firstName: { $regex: search, $options: 'i' } },
+                    { lastName: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } },
+                    { phoneNumber: { $regex: search, $options: 'i' } }
+                ]
+            };
+        }
+
+        // Get students with exam stats and pagination
+        const studentsAggregate = [
+            { $match: { role: 'student', ...searchConditions } },
             {
                 $lookup: {
                     from: 'departments',
@@ -73,13 +91,28 @@ exports.getUsers = async (req, res) => {
                         }
                     }
                 }
-            }
-        ]);
+            },
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit }
+        ];
 
-        // Get staff members with populated departments
-        const staff = await User.find({ role: { $in: ['teacher', 'admin'] } })
+        const students = await User.aggregate(studentsAggregate);
+
+        // Get total count for students pagination
+        const totalStudents = await User.countDocuments({ role: 'student', ...searchConditions });
+
+        // Get staff members with populated departments and pagination
+        const staffQuery = { role: { $in: ['teacher', 'admin'] }, ...searchConditions };
+        const staff = await User.find(staffQuery)
             .populate('departmentId', 'name')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
             .lean();
+
+        // Get total count for staff pagination
+        const totalStaff = await User.countDocuments(staffQuery);
 
         // Map the populated departmentId to department for consistency with the view
         const mappedStaff = staff.map(member => ({
@@ -90,11 +123,25 @@ exports.getUsers = async (req, res) => {
         // Get departments for the add staff form
         const departments = await Department.find().lean();
 
+        // Calculate pagination info
+        const totalUsers = totalStudents + totalStaff;
+        const totalPages = Math.ceil(totalUsers / limit);
+
         res.render('admin/users', {
             title: 'إدارة المستخدمين',
             students,
             staff: mappedStaff,
-            departments
+            departments,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalUsers,
+                hasNext: page < totalPages,
+                hasPrev: page > 1,
+                nextPage: page + 1,
+                prevPage: page - 1
+            },
+            search
         });
     } catch (error) {
         console.error('Error in getUsers:', error);
@@ -724,6 +771,101 @@ exports.getExportExcel = async (req, res, next) => {
         
         // Set response headers
         const filename = `student_results_${studentId}_${Date.now()}.xlsx`;
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+        // Write to response
+        await workbook.xlsx.write(res);
+        res.end();
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Export all users to Excel
+exports.exportUsersExcel = async (req, res, next) => {
+    try {
+        const Excel = require('exceljs');
+        
+        // Get all users with their departments
+        const allUsers = await User.find()
+            .populate('departmentId', 'name')
+            .sort({ role: 1, createdAt: -1 })
+            .lean();
+
+        // Create workbook and worksheet
+        const workbook = new Excel.Workbook();
+        const worksheet = workbook.addWorksheet('Users');
+
+        // Add headers
+        worksheet.addRow([
+            'الاسم الأول',
+            'الاسم الأخير',
+            'البريد الإلكتروني',
+            'رقم الهاتف',
+            'رقم هاتف ولي الأمر',
+            'الدور',
+            'القسم',
+            'الحالة',
+            'تاريخ التسجيل'
+        ]);
+
+        // Style the header row
+        const headerRow = worksheet.getRow(1);
+        headerRow.font = { bold: true, color: { argb: 'FFFFFF' } };
+        headerRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: '366092' }
+        };
+
+        // Add user data
+        allUsers.forEach(user => {
+            const roleArabic = user.role === 'admin' ? 'أدمن' : 
+                              user.role === 'teacher' ? 'معلم' : 'طالب';
+            const statusArabic = user.isActive ? 'نشط' : 'غير نشط';
+            const departmentName = user.departmentId ? user.departmentId.name : 'غير محدد';
+
+            worksheet.addRow([
+                user.firstName,
+                user.lastName,
+                user.email,
+                user.phoneNumber || 'غير مدخل',
+                user.parentPhoneNumber || 'غير مدخل',
+                roleArabic,
+                departmentName,
+                statusArabic,
+                new Date(user.createdAt).toLocaleDateString('ar-EG')
+            ]);
+        });
+
+        // Auto-fit columns
+        worksheet.columns.forEach((column, index) => {
+            let maxLength = 0;
+            column.eachCell({ includeEmpty: true }, (cell) => {
+                const columnLength = cell.value ? cell.value.toString().length : 10;
+                if (columnLength > maxLength) {
+                    maxLength = columnLength;
+                }
+            });
+            column.width = Math.min(maxLength + 2, 30);
+        });
+
+        // Add borders to all cells
+        worksheet.eachRow((row, rowNumber) => {
+            row.eachCell((cell) => {
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+        });
+
+        // Set response headers
+        const filename = `users_export_${new Date().toISOString().split('T')[0]}.xlsx`;
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
