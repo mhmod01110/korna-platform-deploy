@@ -549,40 +549,63 @@
                         <% if (typeof topStudents !== 'undefined' && topStudents && topStudents.length > 0) { %>
                             <div class="hall-of-fame">
                                 <% topStudents.forEach((student, index) => { %>
-                                    <div class="student-rank d-flex align-items-center mb-3 p-3 rounded bg-light">
-                                        <div class="rank-badge ms-3">
-                                            <% if (index === 0) { %>
-                                                <i class="fas fa-crown text-warning fs-4"></i>
-                                            <% } else if (index === 1) { %>
-                                                <i class="fas fa-medal text-secondary fs-4"></i>
-                                            <% } else if (index === 2) { %>
-                                                <i class="fas fa-award text-warning fs-4"></i>
-                                            <% } else { %>
-                                                <span class="badge bg-primary rounded-circle fs-6"><%= index + 1 %></span>
-                                            <% } %>
-                                        </div>
-                                        <div class="student-info flex-grow-1">
-                                            <a href="/admin/users/students/<%= student._id %>" class="text-decoration-none">
+                                    <a href="/admin/users/students/<%= student._id %>" class="text-decoration-none">
+                                        <div class="student-rank d-flex align-items-center mb-3 p-3 rounded bg-light border hover-shadow" 
+                                             style="transition: all 0.2s; cursor: pointer;"
+                                             onmouseover="this.style.backgroundColor='#e9ecef'; this.style.transform='translateY(-2px)'"
+                                             onmouseout="this.style.backgroundColor='#f8f9fa'; this.style.transform='translateY(0)'">
+                                            <div class="rank-badge ms-3">
+                                                <% if (index === 0) { %>
+                                                    <i class="fas fa-crown text-warning fs-4"></i>
+                                                <% } else if (index === 1) { %>
+                                                    <i class="fas fa-medal text-secondary fs-4"></i>
+                                                <% } else if (index === 2) { %>
+                                                    <i class="fas fa-award text-warning fs-4"></i>
+                                                <% } else { %>
+                                                    <span class="badge bg-primary rounded-circle fs-6"><%= index + 1 %></span>
+                                                <% } %>
+                                            </div>
+                                            <div class="student-info flex-grow-1">
                                                 <h6 class="mb-1 text-primary"><%= student.firstName %> <%= student.lastName %></h6>
-                                            </a>                                            <div class="row">
-                                                <div class="col-6">
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-clipboard-check ms-1"></i>
-                                                        <%= student.examCount %> اختبار
-                                                    </small>
+                                                <div class="row">
+                                                    <div class="col-4">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-clipboard-check ms-1"></i>
+                                                            <%= student.examCount %> اختبار
+                                                        </small>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <small class="text-success fw-bold">
+                                                            <i class="fas fa-star ms-1"></i>
+                                                            <%= student.totalObtainedMarks %> نقطة
+                                                        </small>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <small class="text-info">
+                                                            <i class="fas fa-percentage ms-1"></i>
+                                                            <%= student.averagePercentage %>%
+                                                        </small>
+                                                    </div>
                                                 </div>
-                                                <div class="col-6">
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-star ms-1"></i>
-                                                        <%= student.totalScore %> نقطة
-                                                    </small>
+                                                <div class="progress mt-2" style="height: 8px;">
+                                                    <div class="progress-bar bg-success" 
+                                                         role="progressbar"
+                                                         style="width: <%= student.overallPercentage %>%"
+                                                         aria-valuenow="<%= student.overallPercentage %>"
+                                                         aria-valuemin="0"
+                                                         aria-valuemax="100">
+                                                    </div>
                                                 </div>
+                                                <small class="text-muted">
+                                                    إجمالي: <%= student.totalObtainedMarks %>/<%= student.totalPossibleMarks %> 
+                                                    (<%= student.overallPercentage %>%)
+                                                </small>
                                             </div>
-                                            <div class="progress mt-2">
-                                                <div class="progress-bar bg-primary" role="progressbar"></div>
+                                            <div class="ms-auto">
+                                                <i class="fas fa-chevron-left text-muted"></i>
                                             </div>
                                         </div>
-                                    </div>
+                                    </a>
                                 <% }); %>
                             </div>
                         <% } else { %>
