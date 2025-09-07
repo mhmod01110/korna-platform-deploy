@@ -172,8 +172,9 @@ exports.getHome = async (req, res) => {
             $group: {
                 _id: '$studentId',
                 examCount: { $sum: 1 },
-                totalScore: { $sum: '$totalMarks' },
-                averageScore: { $avg: '$totalMarks' }
+                totalObtainedMarks: { $sum: '$obtainedMarks' },
+                totalPossibleMarks: { $sum: '$totalMarks' },
+                averagePercentage: { $avg: '$percentage' }
             }
         },
         {
@@ -196,14 +197,27 @@ exports.getHome = async (req, res) => {
                 firstName: '$studentInfo.firstName',
                 lastName: '$studentInfo.lastName',
                 examCount: 1,
-                totalScore: 1,
-                averageScore: 1
+                totalObtainedMarks: 1,
+                totalPossibleMarks: 1,
+                averagePercentage: { $round: ['$averagePercentage', 1] },
+                overallPercentage: { 
+                    $round: [
+                        { 
+                            $multiply: [
+                                { $divide: ['$totalObtainedMarks', '$totalPossibleMarks'] }, 
+                                100
+                            ] 
+                        }, 
+                        1
+                    ] 
+                }
             }
         },
         {
             $sort: {
-                totalScore: -1,  // main criterion: highest total score
-                _id: 1           // tiebreaker for stable results
+                totalObtainedMarks: -1,  // main criterion: highest total obtained marks
+                averagePercentage: -1,   // secondary: highest average percentage
+                _id: 1                   // tiebreaker for stable results
             }
         },
         { $limit: 5 }
