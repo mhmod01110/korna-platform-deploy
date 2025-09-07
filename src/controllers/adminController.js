@@ -97,8 +97,6 @@ exports.getUsers = async (req, res) => {
             { $limit: limit }
         ];
 
-        const students = await User.aggregate(studentsAggregate);
-
         // Get total count for students pagination
         const totalStudents = await User.countDocuments({ role: 'student', ...searchConditions });
 
@@ -876,4 +874,3 @@ exports.exportUsersExcel = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-}; 
