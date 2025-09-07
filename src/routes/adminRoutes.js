@@ -8,7 +8,6 @@ router.get('/admin', isAuth, isAdmin, adminController.getDashboard);
 
 // User management
 router.get('/admin/users', isAuth, isAdmin, adminController.getUsers);
-
 router.get('/admin/users/export-excel', isAuth, isAdmin, adminController.exportUsersExcel);
 router.get('/admin/users/create', isAuth, isAdmin, adminController.getCreateUser);
 router.post('/admin/users/create', isAuth, isAdmin, adminController.postCreateUser);
