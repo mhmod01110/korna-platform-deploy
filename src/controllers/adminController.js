@@ -876,4 +876,137 @@ exports.exportUsersExcel = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+};
+
+// API endpoint for AJAX search
+exports.getUsersAPI = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 20;
+        const skip = (page - 1) * limit;
+        const search = req.query.search || '';
+        const tab = req.query.tab || 'all'; // all, students, staff
+
+        // Build search conditions
+        let searchConditions = {};
+        if (search) {
+            searchConditions = {
+                $or: [
+                    { firstName: { $regex: search, $options: 'i' } },
+                    { lastName: { $regex: search, $options: 'i' } },
+                    { email: { $regex: search, $options: 'i' } },
+                    { phoneNumber: { $regex: search, $options: 'i' } }
+                ]
+            };
+        }
+
+        let students = [];
+        let staff = [];
+        let totalStudents = 0;
+        let totalStaff = 0;
+
+        // Get data based on active tab
+        if (tab === 'all' || tab === 'students') {
+            // Get students with exam stats and pagination
+            const studentsAggregate = [
+                { $match: { role: 'student', ...searchConditions } },
+                {
+                    $lookup: {
+                        from: 'departments',
+                        localField: 'departmentId',
+                        foreignField: '_id',
+                        as: 'department'
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'results',
+                        localField: '_id',
+                        foreignField: 'studentId',
+                        as: 'results'
+                    }
+                },
+                {
+                    $addFields: {
+                        department: { $arrayElemAt: ['$department', 0] },
+                        examCount: { $size: '$results' },
+                        averageScore: {
+                            $cond: {
+                                if: { $gt: [{ $size: '$results' }, 0] },
+                                then: { $avg: '$results.score' },
+                                else: null
+                            }
+                        }
+                    }
+                },
+                { $sort: { createdAt: -1 } }
+            ];
+
+            if (tab === 'students') {
+                studentsAggregate.push({ $skip: skip }, { $limit: limit });
+            }
+
+            students = await User.aggregate(studentsAggregate);
+            totalStudents = await User.countDocuments({ role: 'student', ...searchConditions });
+        }
+
+        if (tab === 'all' || tab === 'staff') {
+            // Get staff members with populated departments and pagination
+            const staffQuery = { role: { $in: ['teacher', 'admin'] }, ...searchConditions };
+            const staffQueryBuilder = User.find(staffQuery)
+                .populate('departmentId', 'name')
+                .sort({ createdAt: -1 });
+
+            if (tab === 'staff') {
+                staffQueryBuilder.skip(skip).limit(limit);
+            }
+
+            const staffResults = await staffQueryBuilder.lean();
+            totalStaff = await User.countDocuments(staffQuery);
+
+            // Map the populated departmentId to department for consistency with the view
+            staff = staffResults.map(member => ({
+                ...member,
+                department: member.departmentId
+            }));
+        }
+
+        // For 'all' tab, we need to paginate the combined results
+        if (tab === 'all') {
+            const allUsers = [...students, ...staff].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const paginatedUsers = allUsers.slice(skip, skip + limit);
+            
+            // Separate back into students and staff for the response
+            students = paginatedUsers.filter(user => user.role === 'student');
+            staff = paginatedUsers.filter(user => user.role !== 'student');
+        }
+
+        // Calculate pagination info
+        const totalUsers = totalStudents + totalStaff;
+        const totalPages = Math.ceil(
+            tab === 'students' ? totalStudents / limit :
+            tab === 'staff' ? totalStaff / limit :
+            totalUsers / limit
+        );
+
+        res.json({
+            success: true,
+            students,
+            staff,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalUsers: tab === 'students' ? totalStudents : tab === 'staff' ? totalStaff : totalUsers,
+                hasNext: page < totalPages,
+                hasPrev: page > 1,
+                nextPage: page + 1,
+                prevPage: page - 1
+            },
+            search,
+            tab
+        });
+    } catch (error) {
+        console.error('Error in getUsersAPI:', error);
+        res.status(500).json({ success: false, error: 'Error loading users' });
+    }
 }; 

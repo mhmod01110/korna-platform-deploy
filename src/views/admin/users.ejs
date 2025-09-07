@@ -16,24 +16,29 @@
                     <!-- Search Form -->
                     <div class="row mb-4">
                         <div class="col-md-8">
-                            <form method="GET" action="/admin/users" class="d-flex">
-                                <input type="text" class="form-control me-2" name="search" 
+                            <div class="d-flex">
+                                <input type="text" class="form-control me-2" id="searchInput" 
                                        placeholder="البحث بالاسم أو البريد الإلكتروني أو رقم الهاتف..." 
                                        value="<%= search %>" style="max-width: 400px;">
-                                <button type="submit" class="btn btn-primary me-2">
+                                <button type="button" class="btn btn-primary me-2" id="searchBtn">
                                     <i class="fas fa-search"></i> بحث
                                 </button>
-                                <% if (search) { %>
-                                    <a href="/admin/users" class="btn btn-secondary">
-                                        <i class="fas fa-times"></i> مسح
-                                    </a>
-                                <% } %>
-                            </form>
+                                <button type="button" class="btn btn-secondary" id="clearBtn" style="display: <%= search ? 'block' : 'none' %>;">
+                                    <i class="fas fa-times"></i> مسح
+                                </button>
+                            </div>
                         </div>
                         <div class="col-md-4 text-end">
-                            <small class="text-muted">
+                            <small class="text-muted" id="userCount">
                                 إجمالي المستخدمين: <%= pagination.totalUsers %>
                             </small>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div class="text-center" id="loadingSpinner" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
                         </div>
                     </div>
 
@@ -74,7 +79,7 @@
                                             <th>النشاطات</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="allUsersTableBody">
                                         <% (students.concat(staff)).forEach(user => { %>
                                             <tr>
                                                 <td><%= user.firstName %> <%= user.lastName %></td>
@@ -129,7 +134,7 @@
                                             <th>النشاطات</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="studentsTableBody">
                                         <% students.forEach(student => { %>
                                             <tr>
                                                 <td>
@@ -189,7 +194,7 @@
                                             <th>النشاطات</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody id="staffTableBody">
                                         <% staff.forEach(member => { %>
                                             <tr>
                                                 <td><%= member.firstName %> <%= member.lastName %></td>
@@ -232,8 +237,7 @@
                     </div>
 
                     <!-- Pagination Controls -->
-                    <% if (pagination.totalPages > 1) { %>
-                    <nav aria-label="Page navigation" class="mt-4">
+                    <nav aria-label="Page navigation" class="mt-4" id="paginationContainer">
                         <ul class="pagination justify-content-center">
                             <!-- Previous Page -->
                             <% if (pagination.hasPrev) { %>
@@ -372,7 +376,351 @@
 </div>
 
 <script>
+const initialData = {
+    currentPage: <%= pagination.currentPage || 1 %>,
+    currentSearch: '<%= search || "" %>',
+    currentTab: 'all'
+};
+
+let currentPage = initialData.currentPage;
+let currentSearch = initialData.currentSearch;
+let currentTab = initialData.currentTab;
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize event listeners
+    initializeEventListeners();
+    
+    // Tab switching
+    document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            const target = e.target.getAttribute('data-bs-target');
+            currentTab = target === '#all-users' ? 'all' : 
+                        target === '#students' ? 'students' : 'staff';
+            currentPage = 1;
+            loadUsers();
+        });
+    });
+});
+
+function initializeEventListeners() {
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    
+    // Search on button click
+    searchBtn.addEventListener('click', function() {
+        performSearch();
+    });
+    
+    // Search on Enter key
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            performSearch();
+        }
+    });
+    
+    // Real-time search (debounced)
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            performSearch();
+        }, 500); // 500ms delay
+    });
+    
+    // Clear search
+    clearBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        currentSearch = '';
+        currentPage = 1;
+        clearBtn.style.display = 'none';
+        loadUsers();
+    });
+}
+
+function performSearch() {
+    const searchValue = document.getElementById('searchInput').value.trim();
+    currentSearch = searchValue;
+    currentPage = 1;
+    
+    const clearBtn = document.getElementById('clearBtn');
+    clearBtn.style.display = searchValue ? 'block' : 'none';
+    
+    loadUsers();
+}
+
+function loadUsers() {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const tabsContent = document.getElementById('userTabsContent');
+    
+    // Show loading spinner
+    loadingSpinner.style.display = 'block';
+    tabsContent.style.opacity = '0.5';
+    
+    const params = new URLSearchParams({
+        page: currentPage,
+        search: currentSearch,
+        tab: currentTab
+    });
+    
+    fetch(`/admin/users/api?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateTables(data);
+                updatePagination(data.pagination);
+                updateUserCount(data.pagination.totalUsers);
+            } else {
+                alert('Error loading users: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading users');
+        })
+        .finally(() => {
+            // Hide loading spinner
+            loadingSpinner.style.display = 'none';
+            tabsContent.style.opacity = '1';
+        });
+}
+
+function updateTables(data) {
+    // Update All Users table
+    const allUsersBody = document.getElementById('allUsersTableBody');
+    allUsersBody.innerHTML = '';
+    
+    const allUsers = [...data.students, ...data.staff];
+    allUsers.forEach(user => {
+        allUsersBody.appendChild(createAllUsersRow(user));
+    });
+    
+    // Update Students table
+    const studentsBody = document.getElementById('studentsTableBody');
+    studentsBody.innerHTML = '';
+    data.students.forEach(student => {
+        studentsBody.appendChild(createStudentRow(student));
+    });
+    
+    // Update Staff table
+    const staffBody = document.getElementById('staffTableBody');
+    staffBody.innerHTML = '';
+    data.staff.forEach(member => {
+        staffBody.appendChild(createStaffRow(member));
+    });
+    
+    // Reinitialize event listeners for new rows
+    initializeRowEventListeners();
+}
+
+function createAllUsersRow(user) {
+    const row = document.createElement('tr');
+    const roleArabic = user.role === 'admin' ? 'أدمن' : 
+                      user.role === 'teacher' ? 'معلم' : 'طالب';
+    const statusBadge = user.isActive ? 'success' : 'warning';
+    const statusText = user.isActive ? 'نشط' : 'غير نشط';
+    const roleBadge = user.role === 'admin' ? 'danger' : 
+                     user.role === 'teacher' ? 'primary' : 'info';
+    
+    row.innerHTML = `
+        <td>${user.firstName} ${user.lastName}</td>
+        <td>${user.email}</td>
+        <td>${user.phoneNumber || 'غير مدخل'}</td>
+        <td>${user.parentPhoneNumber || 'غير مدخل'}</td>
+        <td>
+            <span class="badge bg-${roleBadge}">${roleArabic}</span>
+        </td>
+        <td>
+            <span class="badge bg-${statusBadge}">${statusText}</span>
+        </td>
+        <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+        <td>
+            <div class="btn-group btn-group-sm">
+                ${user.role === 'student' ? `
+                    <a href="/admin/users/students/${user._id}" class="btn btn-info">
+                        <i class="fas fa-chart-line"></i> عرض التقدم
+                    </a>
+                ` : ''}
+                ${user.role !== 'admin' ? `
+                    <button class="btn btn-warning toggle-status" data-user-id="${user._id}" data-current-status="${user.isActive}">
+                        <i class="fas fa-${user.isActive ? 'ban' : 'check'}"></i>
+                        ${user.isActive ? 'إلغاء تنشيط' : 'تنشيط'}
+                    </button>
+                ` : ''}
+            </div>
+        </td>
+    `;
+    
+    return row;
+}
+
+function createStudentRow(student) {
+    const row = document.createElement('tr');
+    const avgScore = student.averageScore ? student.averageScore.toFixed(1) : null;
+    const scoreBadge = avgScore >= 70 ? 'success' : avgScore >= 50 ? 'warning' : 'danger';
+    
+    row.innerHTML = `
+        <td>
+            ${student.firstName} ${student.lastName}
+            ${!student.isActive ? '<span class="badge bg-warning">غير نشط</span>' : ''}
+        </td>
+        <td>${student.email}</td>
+        <td>${student.phoneNumber || 'غير مدخل'}</td>
+        <td>${student.parentPhoneNumber || 'غير مدخل'}</td>
+        <td>${student.examCount}</td>
+        <td>
+            ${avgScore ? `<span class="badge bg-${scoreBadge}">${avgScore}%</span>` : 'N/A'}
+        </td>
+        <td>
+            <div class="btn-group btn-group-sm">
+                <a href="/admin/users/students/${student._id}" class="btn btn-info">
+                    <i class="fas fa-chart-line"></i> عرض التقدم
+                </a>
+                <button class="btn btn-warning toggle-status" data-user-id="${student._id}" data-current-status="${student.isActive}">
+                    <i class="fas fa-${student.isActive ? 'ban' : 'check'}"></i>
+                    ${student.isActive ? 'إلغاء تنشيط' : 'تنشيط'}
+                </button>
+            </div>
+        </td>
+    `;
+    
+    return row;
+}
+
+function createStaffRow(member) {
+    const row = document.createElement('tr');
+    const roleBadge = member.role === 'admin' ? 'danger' : 'primary';
+    const statusBadge = member.isActive ? 'success' : 'warning';
+    const statusText = member.isActive ? 'نشط' : 'غير نشط';
+    
+    row.innerHTML = `
+        <td>${member.firstName} ${member.lastName}</td>
+        <td>${member.email}</td>
+        <td>${member.phoneNumber || 'غير مدخل'}</td>
+        <td>${member.parentPhoneNumber || 'غير مدخل'}</td>
+        <td>
+            <span class="badge bg-${roleBadge}">${member.role}</span>
+        </td>
+        <td>
+            <span class="badge bg-${statusBadge}">${statusText}</span>
+        </td>
+        <td>
+            <div class="btn-group btn-group-sm">
+                ${member.role !== 'admin' ? `
+                    <button class="btn btn-warning toggle-status" data-user-id="${member._id}" data-current-status="${member.isActive}">
+                        <i class="fas fa-${member.isActive ? 'ban' : 'check'}"></i>
+                        ${member.isActive ? 'إلغاء التنشيط' : 'تنشيط'}
+                    </button>
+                    <button class="btn btn-danger delete-user" data-user-id="${member._id}">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                ` : `
+                    <span class="text-muted">
+                        <i class="fas fa-lock"></i> غير مصرح
+                    </span>
+                `}
+            </div>
+        </td>
+    `;
+    
+    return row;
+}
+
+function updatePagination(pagination) {
+    const container = document.getElementById('paginationContainer');
+    
+    if (pagination.totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '<ul class="pagination justify-content-center">';
+    
+    // Previous button
+    if (pagination.hasPrev) {
+        html += `<li class="page-item">
+            <a class="page-link" href="#" onclick="changePage(${pagination.prevPage}); return false;">
+                <i class="fas fa-chevron-right"></i> السابق
+            </a>
+        </li>`;
+    } else {
+        html += `<li class="page-item disabled">
+            <span class="page-link"><i class="fas fa-chevron-right"></i> السابق</span>
+        </li>`;
+    }
+    
+    // Page numbers
+    const startPage = Math.max(1, pagination.currentPage - 2);
+    const endPage = Math.min(pagination.totalPages, pagination.currentPage + 2);
+    
+    if (startPage > 1) {
+        html += `<li class="page-item">
+            <a class="page-link" href="#" onclick="changePage(1); return false;">1</a>
+        </li>`;
+        if (startPage > 2) {
+            html += `<li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const activeClass = i === pagination.currentPage ? 'active' : '';
+        html += `<li class="page-item ${activeClass}">
+            <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+        </li>`;
+    }
+    
+    if (endPage < pagination.totalPages) {
+        if (endPage < pagination.totalPages - 1) {
+            html += `<li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>`;
+        }
+        html += `<li class="page-item">
+            <a class="page-link" href="#" onclick="changePage(${pagination.totalPages}); return false;">
+                ${pagination.totalPages}
+            </a>
+        </li>`;
+    }
+    
+    // Next button
+    if (pagination.hasNext) {
+        html += `<li class="page-item">
+            <a class="page-link" href="#" onclick="changePage(${pagination.nextPage}); return false;">
+                التالي <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>`;
+    } else {
+        html += `<li class="page-item disabled">
+            <span class="page-link">التالي <i class="fas fa-chevron-left"></i></span>
+        </li>`;
+    }
+    
+    html += '</ul>';
+    
+    // Page info
+    html += `<div class="text-center mt-2">
+        <small class="text-muted">
+            صفحة ${pagination.currentPage} من ${pagination.totalPages} 
+            (إجمالي ${pagination.totalUsers} مستخدم)
+        </small>
+    </div>`;
+    
+    container.innerHTML = html;
+}
+
+function updateUserCount(totalUsers) {
+    document.getElementById('userCount').textContent = `إجمالي المستخدمين: ${totalUsers}`;
+}
+
+function changePage(page) {
+    currentPage = page;
+    loadUsers();
+}
+
+function initializeRowEventListeners() {
     // Toggle user status
     document.querySelectorAll('.toggle-status').forEach(button => {
         button.addEventListener('click', function() {
@@ -388,7 +736,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }).then(response => {
                     if (response.ok) {
-                        window.location.reload();
+                        loadUsers(); // Reload current view instead of full page
                     } else {
                         alert('Error updating user status');
                     }
@@ -411,7 +759,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }).then(response => {
                     if (response.ok) {
-                        window.location.reload();
+                        loadUsers(); // Reload current view instead of full page
                     } else {
                         alert('Error deleting user');
                     }
@@ -419,6 +767,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-});
+}
 </script>
 
