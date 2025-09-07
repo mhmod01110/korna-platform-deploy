@@ -16,31 +16,12 @@
                     <!-- Search Form -->
                     <div class="row mb-4">
                         <div class="col-md-8">
-                            <div class="d-flex">
-                                <input type="text" class="form-control me-2" id="searchInput" 
-                                       placeholder="البحث بالاسم أو البريد الإلكتروني أو رقم الهاتف..." 
-                                       value="<%= search %>" style="max-width: 400px;">
-                                <button type="button" class="btn btn-primary me-2" id="searchBtn">
-                                    <i class="fas fa-search"></i> بحث
-                                </button>
-                                <button type="button" class="btn btn-secondary" id="clearBtn" style="display: <%= search ? 'block' : 'none' %>;">
-                                    <i class="fas fa-times"></i> مسح
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <small class="text-muted" id="userCount">
+
                                 إجمالي المستخدمين: <%= pagination.totalUsers %>
                             </small>
                         </div>
                     </div>
 
-                    <!-- Loading Spinner -->
-                    <div class="text-center" id="loadingSpinner" style="display: none;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    </div>
 
                     <!-- Tabs -->
                     <ul class="nav nav-tabs mb-4" id="userTabs" role="tablist">
@@ -237,7 +218,7 @@
                     </div>
 
                     <!-- Pagination Controls -->
-                    <nav aria-label="Page navigation" class="mt-4" id="paginationContainer">
+
                         <ul class="pagination justify-content-center">
                             <!-- Previous Page -->
                             <% if (pagination.hasPrev) { %>
