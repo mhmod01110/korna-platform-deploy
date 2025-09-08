@@ -20,7 +20,7 @@
                 <div class="card-body">
                     <h5 class="card-title">نجح</h5>
                     <h2 class="mb-0">
-                        <%= results.filter(r => r.isReleased && r.status === 'PASS').length %>
+                        <%= results.filter(r => r.status === 'PASS').length %>
                     </h2>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                 <div class="card-body">
                     <h5 class="card-title">فشل</h5>
                     <h2 class="mb-0">
-                        <%= results.filter(r => r.isReleased && r.status === 'FAIL').length %>
+                        <%= results.filter(r => r.status === 'FAIL').length %>
                     </h2>
                 </div>
             </div>
@@ -41,9 +41,8 @@
                     <h5 class="card-title">معدل الدرجات</h5>
                     <h2 class="mb-0">
                         <% 
-                            const releasedResults = results.filter(r => r.isReleased);
-                            if (releasedResults.length > 0) {
-                                const avgScore = (releasedResults.reduce((sum, r) => sum + r.percentage, 0) / releasedResults.length).toFixed(1);
+                            if (results.length > 0) {
+                                const avgScore = (results.reduce((sum, r) => sum + r.percentage, 0) / results.length).toFixed(1);
                         %>
                             <%= avgScore %>%
                         <% } else { %>
@@ -159,7 +158,7 @@
                                                                 <div class="progress" style="height: 20px;">
                                                                     <div class="progress-bar bg-<%= result.percentage >= 80 ? 'success' : result.percentage >= 60 ? 'info' : 'danger' %>"
                                                                          role="progressbar"
-                                                                         style="width: <%= result.percentage %>%"
+                                                                         data-width="<%= result.percentage %>"
                                                                          aria-valuenow="<%= result.percentage %>"
                                                                          aria-valuemin="0"
                                                                          aria-valuemax="100">
@@ -250,7 +249,7 @@
                                                                 <div class="progress" style="height: 20px;">
                                                                     <div class="progress-bar bg-<%= result.percentage >= 80 ? 'success' : result.percentage >= 60 ? 'info' : 'danger' %>"
                                                                          role="progressbar"
-                                                                         style="width: <%= result.percentage %>%"
+                                                                         data-width="<%= result.percentage %>"
                                                                          aria-valuenow="<%= result.percentage %>"
                                                                          aria-valuemin="0"
                                                                          aria-valuemax="100">
@@ -359,3 +358,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script> 
+<script>
+// Initialize progress bar widths from data-width to avoid inline style lint errors
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-bar[data-width]').forEach(function(el){
+        const w = parseFloat(el.getAttribute('data-width')) || 0;
+        el.style.width = w + '%';
+    });
+});
+</script>

@@ -233,13 +233,7 @@
                                 <%= exam.isPublic ? 'Yes' : 'No' %>
                             </span>
                         </li>
-                        <% if ((user.role === 'teacher' || user.role === 'admin') && exam.status === 'PUBLISHED') { %>
-                            <li class="mt-4">
-                                <button class="btn btn-success" onclick="releaseResults('<%= exam._id %>')">
-                                    <i class="fas fa-chart-bar"></i> إصدار النتائج
-                                </button>
-                            </li>
-                        <% } %>
+                        
                     </ul>
                 </div>
             </div>
@@ -289,39 +283,5 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-async function releaseResults(examId) {
-    try {
-        const response = await fetch(`/exams/${examId}/release-results`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // Show success message
-            Swal.fire({
-                icon: 'success',
-                title: 'نجاح!',
-                text: 'تم إصدار النتائج بنجاح',
-                showConfirmButton: true,
-                timer: 3000,
-                timerProgressBar: true
-            }).then(() => {
-                // Reload the page to reflect the changes
-                window.location.reload();
-            });
-        } else {
-            throw new Error(data.message || 'فشل إصدار النتائج');
-        }
-    } catch (error) {
-        Swal.fire({
-            icon: 'error',
-            title: 'خطأ',
-            text: error.message || 'فشل إصدار النتائج'
-        });
-    }
-}
+// Release results feature removed: results are visible based on exam.resultDisplayOption
 </script>

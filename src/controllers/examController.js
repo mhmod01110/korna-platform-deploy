@@ -1261,7 +1261,6 @@ exports.submitProjectExam = async (req, res) => {
                 obtainedMarks: 0, // Will be updated by teacher
                 percentage: 0, // Will be updated by teacher
                 status: 'FAIL', // Initial status before grading
-                isReleased: false,
                 analytics: {
                     timeSpent: Math.floor((new Date() - currentAttempt.startTime) / 1000),
                     attemptsCount: nextAttemptNumber,
