@@ -21,14 +21,14 @@ exports.getDashboard = async (req, res) => {
             .populate('examId')
             .sort('-createdAt');
 
-            // Calculate student statistics from released results
-            const releasedResults = results.filter(r => r.isReleased);
+            // Calculate student statistics based on exam visibility (not release status)
+            const visibleResults = results.filter(r => r.examId && r.examId.resultDisplayOption !== 'HIDE_RESULTS');
             stats = {
-                totalExams: releasedResults.length,
-                examsPassed: releasedResults.filter(r => r.status === 'PASS').length,
-                examsFailed: releasedResults.filter(r => r.status === 'FAIL').length,
-                averageScore: releasedResults.length > 0 
-                    ? (releasedResults.reduce((sum, r) => sum + r.percentage, 0) / releasedResults.length).toFixed(1)
+                totalExams: visibleResults.length,
+                examsPassed: visibleResults.filter(r => r.status === 'PASS').length,
+                examsFailed: visibleResults.filter(r => r.status === 'FAIL').length,
+                averageScore: visibleResults.length > 0 
+                    ? (visibleResults.reduce((sum, r) => sum + r.percentage, 0) / visibleResults.length).toFixed(1)
                     : 0
             };
 

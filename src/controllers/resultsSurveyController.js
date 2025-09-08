@@ -7,9 +7,9 @@ const User = require('../models/User');
 exports.getResultsSurvey = async (req, res) => {
     try {
         if (req.user.role === 'student') {
-            // For students, show only their own results
-            const studentResults = await Result.find({ studentId: req.user._id, isReleased: true })
-                .populate('examId', 'title type department projectTotalMarks questions')
+            // For students, show only their own results (visible exams only)
+            const studentResults = await Result.find({ studentId: req.user._id })
+                .populate('examId', 'title type department projectTotalMarks questions resultDisplayOption')
                 .populate({
                     path: 'examId',
                     populate: {
@@ -27,18 +27,21 @@ exports.getResultsSurvey = async (req, res) => {
                 .sort('-createdAt')
                 .lean();
 
-            // Calculate statistics for the student
+            // Filter results to only those where the exam allows showing results
+            const visibleStudentResults = studentResults.filter(r => r.examId && r.examId.resultDisplayOption !== 'HIDE_RESULTS');
+
+            // Calculate statistics for the student (visible only)
             const stats = {
-                totalExams: studentResults.length,
-                averageScore: studentResults.length > 0 ? 
-                    studentResults.reduce((sum, r) => sum + r.percentage, 0) / studentResults.length : 0,
-                passRate: studentResults.length > 0 ?
-                    (studentResults.filter(r => r.status === 'PASS').length / studentResults.length) * 100 : 0,
+                totalExams: visibleStudentResults.length,
+                averageScore: visibleStudentResults.length > 0 ? 
+                    visibleStudentResults.reduce((sum, r) => sum + r.percentage, 0) / visibleStudentResults.length : 0,
+                passRate: visibleStudentResults.length > 0 ?
+                    (visibleStudentResults.filter(r => r.status === 'PASS').length / visibleStudentResults.length) * 100 : 0,
                 byDepartment: {}
             };
 
             // Group results by department
-            studentResults.forEach(result => {
+            visibleStudentResults.forEach(result => {
                 const deptName = result.examId.department?.name || 'Uncategorized';
                 if (!stats.byDepartment[deptName]) {
                     stats.byDepartment[deptName] = {
@@ -57,7 +60,7 @@ exports.getResultsSurvey = async (req, res) => {
             });
 
             // Add exam info to results
-            const enhancedResults = studentResults.map(result => ({
+            const enhancedResults = visibleStudentResults.map(result => ({
                 ...result,
                 examInfo: {
                     title: result.examId.title,

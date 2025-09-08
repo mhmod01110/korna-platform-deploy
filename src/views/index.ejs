@@ -86,8 +86,8 @@
                             <i class="fas fa-check-circle fa-2x"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <% const releasedResults = recentResults.filter(r => r.isReleased && r.examId && r.examId.showResults); %>
-                            <h3><%= releasedResults.filter(r => r.status === 'PASS').length %></h3>
+                            <% const visibleResults = recentResults.filter(r => r.examId && r.examId.resultDisplayOption !== 'HIDE_RESULTS'); %>
+                            <h3><%= visibleResults.filter(r => r.status === 'PASS').length %></h3>
                             <p>اختبارات مجتازة</p>
                         </div>
                     </div>
@@ -100,7 +100,7 @@
                             <i class="fas fa-chart-line fa-2x"></i>
                         </div>
                         <div class="flex-grow-1 ms-3">
-                            <h3><%= releasedResults.length ? Math.round(releasedResults.reduce((sum, r) => sum + r.percentage, 0) / releasedResults.length) : 0 %>%</h3>
+                            <h3><%= visibleResults.length ? Math.round(visibleResults.reduce((sum, r) => sum + r.percentage, 0) / visibleResults.length) : 0 %>%</h3>
                             <p>متوسط الدرجات</p>
                         </div>
                     </div>
@@ -590,7 +590,7 @@
                                                 <div class="progress mt-2" style="height: 8px;">
                                                     <div class="progress-bar bg-success" 
                                                          role="progressbar"
-                                                         style="width: <%= student.overallPercentage %>%"
+                                                         data-width="<%= student.overallPercentage %>"
                                                          aria-valuenow="<%= student.overallPercentage %>"
                                                          aria-valuemin="0"
                                                          aria-valuemax="100">
@@ -725,3 +725,12 @@
         }
     }
 </style>
+<script>
+// Initialize progress bars without inline width to satisfy linter
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-bar[data-width]').forEach(function(el){
+        const w = parseFloat(el.getAttribute('data-width')) || 0;
+        el.style.width = w + '%';
+    });
+});
+</script>
