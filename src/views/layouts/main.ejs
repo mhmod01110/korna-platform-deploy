@@ -731,9 +731,10 @@
                         </a>
                     </div>
                     <div class="nav-item">
-                        <a href="/chat/with-admin" class="nav-link">
+                        <a href="/chat/with-admin" class="nav-link position-relative" id="studentChatLink">
                             <i class="fas fa-comments"></i>
                             الدردشة مع الادمن
+                            <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger d-none" id="chatUnreadBadge">0</span>
                         </a>
                     </div>
                     <% } else { %>
@@ -756,9 +757,10 @@
                             </a>
                         </div>
                         <div class="nav-item">
-                            <a href="/chat/admin" class="nav-link">
+                            <a href="/chat/admin" class="nav-link position-relative" id="adminChatLink">
                                 <i class="fas fa-comments"></i>
                                 الدردشة مع الطلاب
+                                <span class="position-absolute top-0 start-0 translate-middle badge rounded-pill bg-danger d-none" id="chatUnreadBadgeAdmin">0</span>
                             </a>
                         </div>
                         <div class="nav-item">
@@ -1017,6 +1019,36 @@
                     link.classList.add('active');
                 }
             });
+
+            // Chat unread badge polling
+            const chatBadgeStudent = document.getElementById('chatUnreadBadge');
+            const chatBadgeAdmin = document.getElementById('chatUnreadBadgeAdmin');
+            async function refreshUnread() {
+                try {
+                    const res = await fetch('/api/chat/unread-count', { credentials: 'same-origin' });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const count = data.unread || 0;
+                    if (chatBadgeStudent) {
+                        if (count > 0) {
+                            chatBadgeStudent.textContent = String(count);
+                            chatBadgeStudent.classList.remove('d-none');
+                        } else {
+                            chatBadgeStudent.classList.add('d-none');
+                        }
+                    }
+                    if (chatBadgeAdmin) {
+                        if (count > 0) {
+                            chatBadgeAdmin.textContent = String(count);
+                            chatBadgeAdmin.classList.remove('d-none');
+                        } else {
+                            chatBadgeAdmin.classList.add('d-none');
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+            }
+            refreshUnread();
+            setInterval(refreshUnread, 5000);
         });
     </script>
 

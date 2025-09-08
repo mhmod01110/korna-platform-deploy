@@ -98,6 +98,9 @@
                                                             <a href="/admin/users/students/<%= user._id %>" class="btn btn-info">
                                                                 <i class="fas fa-chart-line"></i> عرض التقدم
                                                             </a>
+                                                            <a href="/chat/admin/<%= user._id %>" class="btn btn-primary">
+                                                                <i class="fas fa-comments"></i> فتح الدردشة
+                                                            </a>
                                                         <% } %>
                                                         <% if (user.role !== 'admin') { %>
                                                             <button class="btn btn-warning toggle-status" data-user-id="<%= user._id %>" data-current-status="<%= user.isActive %>">
@@ -155,6 +158,9 @@
                                                     <div class="btn-group btn-group-sm">
                                                         <a href="/admin/users/students/<%= student._id %>" class="btn btn-info">
                                                             <i class="fas fa-chart-line"></i> عرض التقدم
+                                                        </a>
+                                                        <a href="/chat/admin/<%= student._id %>" class="btn btn-primary">
+                                                            <i class="fas fa-comments"></i> فتح الدردشة
                                                         </a>
                                                         <button class="btn btn-warning toggle-status" data-user-id="<%= student._id %>" data-current-status="<%= student.isActive %>">
                                                             <i class="fas fa-<%= student.isActive ? 'ban' : 'check' %>"></i>

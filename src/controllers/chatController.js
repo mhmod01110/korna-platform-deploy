@@ -163,3 +163,24 @@ exports.markRead = async (req, res, next) => {
 	}
 };
 
+// Return total unread messages for the current user
+exports.getUnreadCount = async (req, res, next) => {
+    try {
+        // Determine role perspective
+        let match = {};
+        if (req.user.role === 'admin' || req.user.role === 'teacher') {
+            match = { adminId: req.user._id };
+            const conversations = await Conversation.find(match).select('adminUnreadCount');
+            const total = conversations.reduce((sum, c) => sum + (c.adminUnreadCount || 0), 0);
+            return res.json({ unread: total });
+        } else {
+            match = { studentId: req.user._id };
+            const conversations = await Conversation.find(match).select('studentUnreadCount');
+            const total = conversations.reduce((sum, c) => sum + (c.studentUnreadCount || 0), 0);
+            return res.json({ unread: total });
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+

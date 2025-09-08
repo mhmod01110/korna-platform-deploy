@@ -18,6 +18,7 @@ router.get('/api/chat/conversations', isAuth, isAdmin, chatController.listConver
 router.get('/api/chat/messages', isAuth, chatController.listMessages);
 router.post('/api/chat/messages', isAuth, chatController.sendMessage);
 router.post('/api/chat/mark-read', isAuth, chatController.markRead);
+router.get('/api/chat/unread-count', isAuth, chatController.getUnreadCount);
 
 module.exports = router;
 
