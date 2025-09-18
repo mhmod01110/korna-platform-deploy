@@ -1,11 +1,11 @@
 <%# This component shows publish/unpublish buttons for exams %>
 <% if ((user.role === 'admin' || user.role === 'teacher') && (exam.createdBy._id.toString() === user._id.toString() || user.role === 'admin')) { %>
     <div class="publish-controls" data-exam-id="<%= exam._id %>">
-        <% if (exam.status === 'draft') { %>
+        <% if (exam.status === 'DRAFT') { %>
             <button class="btn btn-success publish-exam" onclick="publishExam('<%= exam._id %>')">
                 <i class="fas fa-check-circle me-2"></i>نشر الاختبار
             </button>
-        <% } else if (exam.status === 'published') { %>
+        <% } else if (exam.status === 'PUBLISHED') { %>
             <button class="btn btn-warning unpublish-exam" onclick="unpublishExam('<%= exam._id %>')">
                 <i class="fas fa-times-circle me-2"></i>إلغاء نشر الاختبار
             </button>
