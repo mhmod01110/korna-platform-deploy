@@ -45,7 +45,22 @@ app.locals.contentFor = function (name) {
 app.locals.styles = "<%- styles %>";
 
 // Middleware
-app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    maxAge: "365d", // cache for 365 day
+    etag: true,   // enable ETag for cache validation
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".html")) {
+        // Don't cache HTML (always revalidate)
+        res.setHeader("Cache-Control", "no-cache");
+      } else {
+        // Cache other static assets
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    }
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
