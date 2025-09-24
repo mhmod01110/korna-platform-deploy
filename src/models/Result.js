@@ -74,7 +74,7 @@ const resultSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: {
-            values: ['PASS', 'FAIL', 'PENDING_REVIEW', 'UNDER_REVIEW', 'CANCELLED'],
+            values: ['PASS', 'FAIL', 'PENDING', 'UNDER_REVIEW', 'CANCELLED'],
             message: "{VALUE} is not a valid status"
         },
         required: [true, "Status is required"]
