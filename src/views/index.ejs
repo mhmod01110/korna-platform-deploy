@@ -244,64 +244,79 @@
                 </div>
             </div>
 
-            <!-- Recent Results -->
-            <div class="col-lg-6 mb-4">
-                <div class="modern-card h-100">
-                    <div class="card-header gradient-success">
-                        <h5 class="mb-0">
-                            <i class="fas fa-chart-line ms-2"></i>
-                            النتائج الأخيرة
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <% if (typeof recentResults !== 'undefined' && recentResults.length > 0) { %>
-                            <div class="list-group list-group-flush">
-                                <% recentResults.slice(0, 5).forEach(result => { %>
-                                    <% if (result.examId.resultDisplayOption === 'SHOW_FULL_DETAILS') { %>
-                                        <a href="/exams/<%= result.examId._id %>/results/<%= result._id.toString() %>" 
-                                           class="list-group-item list-group-item-action border-0 px-0">
-                                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                                <div>
-                                                    <h6 class="mb-1"><%= result.examTitle %></h6>
-                                                    <p class="mb-1 text-muted small">
-                                                        <i class="fas fa-calendar ms-1"></i>
-                                                        <%= new Date(result.createdAt).toLocaleDateString('ar-EG') %>
-                                                    </p>
-                                                </div>
-                                                <div class="text-end">
-                                                    <span class="badge <%= result.status === 'PASS' ? 'bg-success' : 'bg-danger' %> fs-6">
-                                                        <%= result.percentage.toFixed(1) %>%
-                                                    </span>
-                                                </div>
+        <!-- Recent Results -->
+        <div class="col-lg-6 mb-4">
+            <div class="modern-card h-100">
+                <div class="card-header gradient-success">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line ms-2"></i>
+                        النتائج الأخيرة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <% if (typeof recentResults !== 'undefined' && recentResults.length > 0) { %>
+                        <div class="list-group list-group-flush">
+                            <% recentResults.slice(0, 5).forEach(result => { %>
+                                <% if (result.examId.resultDisplayOption === 'SHOW_FULL_DETAILS') { %>
+                                    <a href="/exams/<%= result.examId._id %>/results/<%= result._id.toString() %>" 
+                                       class="list-group-item list-group-item-action border-0 px-0">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1"><%= result.examTitle %></h6>
+                                                <p class="mb-1 text-muted small">
+                                                    <i class="fas fa-calendar ms-1"></i>
+                                                    <%= new Date(result.createdAt).toLocaleDateString('ar-EG') %>
+                                                </p>
                                             </div>
-                                        </a>
-                                    <% } else if (result.examId.resultDisplayOption === 'SHOW_SCORE_ONLY') { %>
-                                        <div class="list-group-item border-0 px-0">
-                                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                                <div>
-                                                    <h6 class="mb-1"><%= result.examTitle %></h6>
-                                                    <p class="mb-1 text-muted small">
-                                                        <i class="fas fa-calendar ms-1"></i>
-                                                        <%= new Date(result.createdAt).toLocaleDateString('ar-EG') %>
-                                                    </p>
-                                                </div>
-                                                <div class="text-end">
-                                                    <span class="badge <%= result.status === 'PASS' ? 'bg-success' : 'bg-danger' %> fs-6">
-                                                        <%= result.status === 'PASS' ? 'نجح' : 'فشل' %>
-                                                    </span>
-                                                </div>
+                                            <div class="text-end">
+                                                <span class="badge 
+                                                    <%= result.status === 'PASS' 
+                                                        ? 'bg-success' 
+                                                        : result.status === 'UNDER_REVIEW' 
+                                                            ? 'bg-warning text-dark' 
+                                                            : 'bg-danger' %> fs-6">
+        
+                                                    <%= result.status === 'UNDER_REVIEW' 
+                                                        ? 'قيد المراجعة' 
+                                                        : result.percentage.toFixed(1) + '%' %>
+                                                </span>
                                             </div>
                                         </div>
-                                    <% } %>
-                                <% }) %>
-                            </div>
-                        <% } else { %>
-                            <div class="text-center py-4">
-                                <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">لا توجد نتائج حديثة</p>
-                            </div>
-                        <% } %>
-                    </div>
+                                    </a>
+                                <% } else if (result.examId.resultDisplayOption === 'SHOW_SCORE_ONLY') { %>
+                                    <div class="list-group-item border-0 px-0">
+                                        <div class="d-flex w-100 justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1"><%= result.examTitle %></h6>
+                                                <p class="mb-1 text-muted small">
+                                                    <i class="fas fa-calendar ms-1"></i>
+                                                    <%= new Date(result.createdAt).toLocaleDateString('ar-EG') %>
+                                                </p>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge 
+                                                    <%= result.status === 'PASS' 
+                                                        ? 'bg-success' 
+                                                        : result.status === 'UNDER_REVIEW' 
+                                                            ? 'bg-warning text-dark' 
+                                                            : 'bg-danger' %> fs-6">
+        
+                                                    <%= result.status === 'UNDER_REVIEW' 
+                                                        ? 'قيد المراجعة' 
+                                                        : (result.status === 'PASS' ? 'نجح' : 'فشل') %>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            <% }) %>
+                        </div>
+                    <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">لا توجد نتائج حديثة</p>
+                        </div>
+                    <% } %>
                 </div>
             </div>
         </div>
