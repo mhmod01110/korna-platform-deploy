@@ -228,9 +228,15 @@
                                                             <% } %>
                                                         </td>
                                                         <td>
-                                                            <span class="badge <%= result.status === 'PASS' ? 'bg-success' : 'bg-danger' %>">
-                                                                <%= result.status %>
-                                                            </span>
+                                                            <% if (result.status === 'UNDER_REVIEW') { %>
+                                                                <span class="badge bg-warning text-dark">
+                                                                    قيد المراجعة
+                                                                </span>
+                                                            <% } else { %>
+                                                                <span class="badge <%= result.status === 'PASS' ? 'bg-success' : 'bg-danger' %>">
+                                                                    <%= result.status %>
+                                                                </span>
+                                                            <% } %>
                                                         </td>
                                                         <td>
                                                             <% if (result.examId.resultDisplayOption === 'SHOW_FULL_DETAILS') { %>
