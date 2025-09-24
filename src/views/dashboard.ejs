@@ -138,9 +138,13 @@
                                                             <% } %>
                                                         </td>
                                                         <td>
-                                                            <span class="badge <%= result.status === 'PASS' ? 'bg-success' : 'bg-danger' %>">
-                                                                <%= result.status %>
-                                                            </span>
+                                                            <% if (result.examId.resultDisplayOption === 'HIDE_RESULTS') { %>
+                                                                <span class="badge bg-warning text-dark">قيد المراجعة</span>
+                                                            <% } else { %>
+                                                                <span class="badge <%= result.status === 'PASS' ? 'bg-success' : 'bg-danger' %>">
+                                                                    <%= result.status %>
+                                                                </span>
+                                                            <% } %>
                                                         </td>
                                                         <td>
                                                             <% if (result.examId.resultDisplayOption === 'SHOW_FULL_DETAILS') { %>
@@ -228,7 +232,9 @@
                                                             <% } %>
                                                         </td>
                                                         <td>
-                                                            <% if (result.status === 'UNDER_REVIEW') { %>
+                                                            <% if (result.examId.resultDisplayOption === 'HIDE_RESULTS') { %>
+                                                                <span class="badge bg-warning text-dark">قيد المراجعة</span>
+                                                            <% } else if (result.status === 'UNDER_REVIEW') { %>
                                                                 <span class="badge bg-warning text-dark">
                                                                     قيد المراجعة
                                                                 </span>
@@ -675,21 +681,30 @@ document.addEventListener('DOMContentLoaded', function() {
         projectTable.innerHTML = projectHtml || '<tr><td colspan="6" class="text-center">لا يوجد تقديمات</td></tr>';
     }
     
-    groupByFilter.addEventListener('change', function() {
-        groupSubmissions(this.value);
-    });
+    if (groupByFilter) {
+        groupByFilter.addEventListener('change', function() {
+            groupSubmissions(this.value);
+        });
+    }
     
-    resetGrouping.addEventListener('click', function() {
-        groupByFilter.value = 'date';
-        groupSubmissions('date');
-    });
+    if (resetGrouping) {
+        resetGrouping.addEventListener('click', function() {
+            if (groupByFilter) {
+                groupByFilter.value = 'date';
+                groupSubmissions('date');
+            }
+        });
+    }
 });
 
 // Additional grading functions
 function scrollToGradingSection() {
-    document.querySelector('.card-header-tabs').scrollIntoView({ 
-        behavior: 'smooth' 
-    });
+    const element = document.querySelector('.card-header-tabs');
+    if (element) {
+        element.scrollIntoView({ 
+            behavior: 'smooth' 
+        });
+    }
 }
 
 function markPriorityGrading(submissionId) {
