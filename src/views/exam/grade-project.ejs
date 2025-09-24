@@ -26,22 +26,58 @@
                 </p>
             </div>
 
-            <!-- Project File -->
+            <!-- Project Files -->
             <div class="mb-4">
-                <h5>المشروع المقدم</h5>
+                <h5>الملفات المقدمة</h5>
                 <div class="card">
                     <div class="card-body">
-                        <p class="mb-2">
-                            <strong>اسم الملف:</strong> <%= submission.projectSubmission.fileName %>
-                        </p>
-                        <p class="mb-2">
-                            <strong>نوع الملف:</strong> <%= submission.projectSubmission.fileType %>
-                        </p>
-                        <a href="<%= submission.projectSubmission.fileUrl %>" 
-                           target="_blank" 
-                           class="btn btn-primary">
-                            <i class="fas fa-download"></i> تحميل المشروع
-                        </a>
+                        <% if (submission.projectSubmission.files && submission.projectSubmission.files.length > 0) { %>
+                            <!-- Multiple files (new format) -->
+                            <p class="mb-3"><strong>عدد الملفات:</strong> <%= submission.projectSubmission.files.length %></p>
+                            <div class="row">
+                                <% submission.projectSubmission.files.forEach((file, index) => { %>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card border-secondary">
+                                            <div class="card-body p-3">
+                                                <h6 class="card-title text-truncate" title="<%= file.fileName %>">
+                                                    <i class="fas fa-file"></i> <%= file.fileName %>
+                                                </h6>
+                                                <p class="card-text small mb-2">
+                                                    <strong>النوع:</strong> <%= file.fileType %><br>
+                                                    <strong>الحجم:</strong> <%= Math.round(file.fileSize / 1024) %> KB<br>
+                                                    <strong>تاريخ التحميل:</strong> <%= new Date(file.uploadedAt).toLocaleString() %>
+                                                </p>
+                                                <a href="<%= file.fileUrl %>" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-download"></i> تحميل
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } else if (submission.projectSubmission.fileUrl) { %>
+                            <!-- Single file (legacy format) -->
+                            <p class="mb-2">
+                                <strong>اسم الملف:</strong> <%= submission.projectSubmission.fileName %>
+                            </p>
+                            <p class="mb-2">
+                                <strong>نوع الملف:</strong> <%= submission.projectSubmission.fileType %>
+                            </p>
+                            <p class="mb-3">
+                                <strong>الحجم:</strong> <%= Math.round(submission.projectSubmission.fileSize / 1024) %> KB
+                            </p>
+                            <a href="<%= submission.projectSubmission.fileUrl %>" 
+                               target="_blank" 
+                               class="btn btn-primary">
+                                <i class="fas fa-download"></i> تحميل المشروع
+                            </a>
+                        <% } else { %>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> لم يتم العثور على ملفات لهذا التقديم
+                            </div>
+                        <% } %>
                     </div>
                 </div>
             </div>
@@ -74,7 +110,32 @@
                         <textarea class="form-control" 
                                   id="feedback" 
                                   name="feedback" 
-                                  rows="4"><%= submission.projectSubmission.feedback || '' %></textarea>
+                                  rows="6" 
+                                  required
+                                  placeholder="يرجى كتابة تعليق تفصيلي حول أداء الطالب في المشروع..."><% if (submission.projectSubmission.feedback && submission.projectSubmission.feedback.text) { %><%= submission.projectSubmission.feedback.text %><% } else if (submission.projectSubmission.feedback) { %><%= submission.projectSubmission.feedback %><% } %></textarea>
+                        <div class="form-text">يرجى تقديم ملاحظات بنّاءة ومفيدة للطالب</div>
+                        <div class="invalid-feedback">
+                            يرجى إدخال تعليق على التقديم
+                        </div>
+                    </div>
+
+                    <!-- Quick Feedback Templates -->
+                    <div class="mb-3">
+                        <label class="form-label">نماذج التعليقات السريعة</label>
+                        <div class="btn-group-vertical d-grid gap-2">
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="addFeedbackTemplate('excellent')">
+                                <i class="fas fa-star"></i> ممتاز - عمل متميز
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addFeedbackTemplate('good')">
+                                <i class="fas fa-thumbs-up"></i> جيد - يلبي المتطلبات
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="addFeedbackTemplate('needswork')">
+                                <i class="fas fa-exclamation"></i> يحتاج تحسين
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="addFeedbackTemplate('poor')">
+                                <i class="fas fa-times"></i> ضعيف - لا يلبي المتطلبات
+                            </button>
+                        </div>
                     </div>
 
                     <div class="d-grid">
@@ -131,5 +192,55 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error:', error);
             alert(error.message || 'خطأ في تقييم المشروع');
         }
+    });
+
+    // Add feedback template functionality
+    window.addFeedbackTemplate = function(type) {
+        const feedbackTextarea = document.getElementById('feedback');
+        const templates = {
+            excellent: 'عمل ممتاز! لقد أظهر الطالب فهماً عميقاً للموضوع وقدم حلولاً إبداعية. التنفيذ كان دقيقاً والنتائج تتجاوز التوقعات.',
+            good: 'عمل جيد. الطالب فهم المتطلبات وطبقها بشكل صحيح. هناك مجال للتحسين في بعض التفاصيل ولكن العمل يلبي المعايير المطلوبة.',
+            needswork: 'العمل يحتاج إلى تحسين. بعض المتطلبات لم تُنفذ بالشكل المطلوب. يُنصح بمراجعة التعليمات والتركيز على النقاط المحددة للحصول على نتائج أفضل.',
+            poor: 'العمل لا يلبي المتطلبات الأساسية. هناك حاجة لمراجعة شاملة للموضوع وإعادة العمل على المشروع. يُنصح بطلب المساعدة والتوجيه.'
+        };
+
+        const currentText = feedbackTextarea.value.trim();
+        const templateText = templates[type];
+        
+        if (currentText === '') {
+            feedbackTextarea.value = templateText;
+        } else {
+            feedbackTextarea.value = currentText + '\n\n' + templateText;
+        }
+        
+        // Focus on textarea to allow immediate editing
+        feedbackTextarea.focus();
+        feedbackTextarea.setSelectionRange(feedbackTextarea.value.length, feedbackTextarea.value.length);
+    };
+
+    // Auto-suggest marks based on feedback templates
+    document.querySelectorAll('[onclick*="addFeedbackTemplate"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const marksInput = document.getElementById('marks');
+            const maxMarks = parseInt('<%= submission.examId.projectTotalMarks %>');
+            const type = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+            
+            if (marksInput.value === '' || marksInput.value === '0') {
+                switch(type) {
+                    case 'excellent':
+                        marksInput.value = Math.floor(maxMarks * 0.9); // 90%
+                        break;
+                    case 'good':
+                        marksInput.value = Math.floor(maxMarks * 0.75); // 75%
+                        break;
+                    case 'needswork':
+                        marksInput.value = Math.floor(maxMarks * 0.55); // 55%
+                        break;
+                    case 'poor':
+                        marksInput.value = Math.floor(maxMarks * 0.3); // 30%
+                        break;
+                }
+            }
+        });
     });
 });</script> 

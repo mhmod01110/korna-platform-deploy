@@ -35,15 +35,18 @@
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     
                     <div class="mb-3">
-                        <label for="projectFile" class="form-label">ملف المشروع</label>
-                        <input type="file" class="form-control" id="projectFile" name="projectFile" required 
-                               accept=".jpg,.png,.jpeg,.mp4,.mov,.avi,.mkv,.webm">
+                        <label for="projectFiles" class="form-label">ملفات المشروع</label>
+                        <input type="file" class="form-control" id="projectFiles" name="projectFiles" multiple required 
+                               accept=".pdf,.zip,.rar,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.png,.jpeg,.gif,.svg,.mp4,.mov,.avi,.mkv,.webm,.mp3,.wav,.ogg,.txt,.csv">
                         <div class="form-text">
-                            الملفات المقبولة: JPG, PNG, JPEG, MP4, MOV, AVI, MKV, WEBM
+                            <strong>يمكنك تحميل أكثر من ملف واحد (حد أقصى 10 ملفات)</strong><br>
+                            الملفات المقبولة: PDF, ZIP, RAR, Word, PowerPoint, Excel, صور (JPG, PNG, GIF, SVG), فيديو (MP4, MOV, AVI, MKV, WEBM), صوت (MP3, WAV, OGG), نصوص (TXT, CSV)<br>
+                            الحد الأقصى لحجم كل ملف: 50 ميجابايت
                         </div>
                         <div class="invalid-feedback">
-                            يرجى تحديد ملف للتحميل
+                            يرجى تحديد ملف واحد على الأقل للتحميل
                         </div>
+                        <div id="filePreview" class="mt-2"></div>
                     </div>
 
                     <button type="submit" id="submitButton" class="btn btn-primary">تقديم المشروع</button>
@@ -56,24 +59,58 @@
                     <h4>التقديم السابق</h4>
                     <div class="card">
                         <div class="card-body">
-                            <p><strong>File:</strong> 
-                                <a href="<%= existingSubmission.projectSubmission.fileUrl %>" target="_blank">
-                                    <%= existingSubmission.projectSubmission.fileName %>
-                                </a>
-                            </p>
-                            <p><strong>Submitted:</strong> 
+                            <% if (existingSubmission.projectSubmission.files && existingSubmission.projectSubmission.files.length > 0) { %>
+                                <!-- Multiple files (new format) -->
+                                <p><strong>عدد الملفات:</strong> <%= existingSubmission.projectSubmission.files.length %></p>
+                                <div class="row">
+                                    <% existingSubmission.projectSubmission.files.forEach((file, index) => { %>
+                                        <div class="col-md-6 mb-2">
+                                            <div class="card border-secondary">
+                                                <div class="card-body p-3">
+                                                    <h6 class="card-title text-truncate" title="<%= file.fileName %>">
+                                                        <i class="fas fa-file"></i> <%= file.fileName %>
+                                                    </h6>
+                                                    <p class="card-text small mb-2">
+                                                        <strong>الحجم:</strong> <%= Math.round(file.fileSize / 1024) %> KB
+                                                    </p>
+                                                    <a href="<%= file.fileUrl %>" target="_blank" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-download"></i> تحميل
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            <% } else if (existingSubmission.projectSubmission.fileUrl) { %>
+                                <!-- Single file (legacy format) -->
+                                <p><strong>الملف:</strong> 
+                                    <a href="<%= existingSubmission.projectSubmission.fileUrl %>" target="_blank">
+                                        <%= existingSubmission.projectSubmission.fileName %>
+                                    </a>
+                                </p>
+                            <% } %>
+                            
+                            <p><strong>تاريخ التقديم:</strong> 
                                 <%= new Date(existingSubmission.projectSubmission.submittedAt).toLocaleString() %>
                             </p>
                             
                             <% if (existingSubmission.status === 'GRADED') { %>
                                 <div class="alert alert-info">
                                     <p><strong>الدرجات:</strong> 
-                                        <%= existingSubmission.projectSubmission.marksObtained %>/<%= exam.totalMarks %>
+                                        <%= existingSubmission.projectSubmission.marksObtained %>/<%= exam.projectTotalMarks || exam.totalMarks %>
                                     </p>
                                     <% if (existingSubmission.projectSubmission.feedback) { %>
                                         <p><strong>التعليق:</strong></p>
-                                        <p><%= existingSubmission.projectSubmission.feedback %></p>
+                                        <% if (existingSubmission.projectSubmission.feedback.text) { %>
+                                            <p><%= existingSubmission.projectSubmission.feedback.text %></p>
+                                        <% } else { %>
+                                            <p><%= existingSubmission.projectSubmission.feedback %></p>
+                                        <% } %>
                                     <% } %>
+                                </div>
+                            <% } else { %>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-clock"></i> في انتظار التقييم
                                 </div>
                             <% } %>
                         </div>
@@ -133,16 +170,66 @@
         form.classList.add('was-validated');
     });
 
-    // File size validation
-    const fileInput = document.getElementById('projectFile');
-    const maxSize = 50 * 1024 * 1024; // 50MB max size
+    // File size and count validation
+    const fileInput = document.getElementById('projectFiles');
+    const filePreview = document.getElementById('filePreview');
+    const maxSize = 50 * 1024 * 1024; // 50MB max size per file
+    const maxFiles = 10; // Maximum 10 files
 
     fileInput.addEventListener('change', function() {
-        if (this.files[0] && this.files[0].size > maxSize) {
-            alert('File is too large. Maximum size allowed is 50MB.');
-            this.value = ''; // Clear the file input
+        const files = this.files;
+        filePreview.innerHTML = '';
+
+        if (files.length > maxFiles) {
+            alert(`Maximum ${maxFiles} files allowed. Please select fewer files.`);
+            this.value = '';
+            return;
+        }
+
+        let totalSize = 0;
+        let validFiles = true;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            totalSize += file.size;
+
+            if (file.size > maxSize) {
+                alert(`File "${file.name}" is too large. Maximum size allowed is 50MB per file.`);
+                validFiles = false;
+                break;
+            }
+        }
+
+        if (!validFiles) {
+            this.value = '';
+            return;
+        }
+
+        // Display file preview
+        if (files.length > 0) {
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'alert alert-info';
+            previewDiv.innerHTML = `
+                <h6><i class="fas fa-file"></i> الملفات المحددة (${files.length}):</h6>
+                <ul class="mb-0">
+                    ${Array.from(files).map(file => `
+                        <li>${file.name} (${formatFileSize(file.size)})</li>
+                    `).join('')}
+                </ul>
+                <small class="text-muted">إجمالي الحجم: ${formatFileSize(totalSize)}</small>
+            `;
+            filePreview.appendChild(previewDiv);
         }
     });
+
+    // Format file size helper function
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
 
     // Warning message function
     function showWarningMessage() {

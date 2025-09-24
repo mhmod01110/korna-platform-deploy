@@ -148,6 +148,7 @@ const departmentRoutes = require("./src/routes/departmentRoutes");
 const resultsSurveyRoutes = require("./src/routes/resultsSurveyRoutes");
 const staticRoutes = require("./src/routes/staticRoutes");
 const chatRoutes = require("./src/routes/chatRoutes");
+const notificationRoutes = require("./src/routes/notificationRoutes");
 const errorHandler = require("./src/middleware/errorHandler");
 
 app.use("/", authRoutes);
@@ -159,6 +160,7 @@ app.use("/departments", departmentRoutes);
 app.use("/", resultsSurveyRoutes);
 app.use("/", staticRoutes);
 app.use("/", chatRoutes);
+app.use("/notifications", notificationRoutes);
 
 // Error handling middleware
 app.use(errorHandler);

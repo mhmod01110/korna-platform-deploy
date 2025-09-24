@@ -6,6 +6,7 @@ const Result = require('../models/Result');
 const Department = require('../models/Department');
 const AppError = require('../utils/AppError');
 const { uploadToGoogleDrive } = require('../utils/google-drive-upload');
+const { notifyExamPublished, notifyProjectSubmitted, notifyProjectGraded } = require('./notificationController');
 const fs = require('fs');
 
 // Display list of all exams
@@ -382,6 +383,9 @@ exports.publishExam = async (req, res, next) => {
         // Update exam status
         exam.status = 'PUBLISHED';
         await exam.save();
+        
+        // Send notifications to students
+        await notifyExamPublished(exam._id, req.user._id);
         
         if (req.xhr || req.headers.accept.includes('application/json')) {
             return res.json({ 
@@ -1160,7 +1164,6 @@ exports.getProjectSubmission = async (req, res) => {
 exports.submitProjectExam = async (req, res) => {
     try {
         const { examId } = req.params;
-        let fileUrl;
         
         // Check if exam exists and is of type PROJECT
         const exam = await Exam.findById(examId);
@@ -1181,19 +1184,51 @@ exports.submitProjectExam = async (req, res) => {
             return res.redirect(`/exams/${examId}`);
         }
 
-        // Check if file is uploaded
-        if (!req.files || !req.files.projectFile) {
-            req.flash('error', 'Please upload a file');
+        // Check if files are uploaded - support both single and multiple files
+        if (!req.files || (!req.files.projectFiles && !req.files.projectFile)) {
+            req.flash('error', 'Please upload at least one file');
             return res.redirect(`/exams/${examId}/submit-project`);
         }
 
-        const projectFile = req.files.projectFile;
+        // Handle both single file (projectFile) and multiple files (projectFiles)
+        let filesToUpload = [];
+        if (req.files.projectFiles) {
+            // Multiple files
+            filesToUpload = Array.isArray(req.files.projectFiles) ? req.files.projectFiles : [req.files.projectFiles];
+        } else if (req.files.projectFile) {
+            // Single file (backward compatibility)
+            filesToUpload = [req.files.projectFile];
+        }
 
-        // Validate file type
-        const allowedTypes = ['application/pdf', 'application/zip', 'application/x-rar-compressed', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/mov', 'video/avi', 'video/mkv', 'video/webm'];
-        if (!allowedTypes.includes(projectFile.mimetype)) {
-            req.flash('error', 'Invalid file type. Please upload a supported file type.');
+        // Validate file types and size
+        const allowedTypes = [
+            'application/pdf', 'application/zip', 'application/x-rar-compressed', 
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml',
+            'video/mp4', 'video/mov', 'video/avi', 'video/mkv', 'video/webm',
+            'audio/mp3', 'audio/wav', 'audio/ogg',
+            'text/plain', 'text/csv'
+        ];
+        
+        const maxFileSize = 50 * 1024 * 1024; // 50MB per file
+        const maxTotalFiles = 10; // Maximum 10 files
+
+        if (filesToUpload.length > maxTotalFiles) {
+            req.flash('error', `Maximum ${maxTotalFiles} files allowed`);
             return res.redirect(`/exams/${examId}/submit-project`);
+        }
+
+        for (const file of filesToUpload) {
+            if (!allowedTypes.includes(file.mimetype)) {
+                req.flash('error', `Invalid file type for ${file.name}. Please upload supported file types.`);
+                return res.redirect(`/exams/${examId}/submit-project`);
+            }
+            if (file.size > maxFileSize) {
+                req.flash('error', `File ${file.name} is too large. Maximum size is 50MB per file.`);
+                return res.redirect(`/exams/${examId}/submit-project`);
+            }
         }
 
         // Get the latest submission to determine the next attempt number
@@ -1210,38 +1245,55 @@ exports.submitProjectExam = async (req, res) => {
             return res.redirect(`/exams/${examId}`);
         }
 
-        // Try to upload file first
+        // Upload all files
+        const uploadedFiles = [];
         try {
             // Create folder name using exam title and ID
             const folderName = `${exam.title.replace(/[^a-zA-Z0-9]/g, '_')}_${exam._id}`;
             
-            // Upload file to Google Drive
-            fileUrl = await uploadToGoogleDrive({
-                name: projectFile.name,
-                mimetype: projectFile.mimetype,
-                tempFilePath: projectFile.tempFilePath
-            }, folderName);
+            for (const file of filesToUpload) {
+                const fileUrl = await uploadToGoogleDrive({
+                    name: file.name,
+                    mimetype: file.mimetype,
+                    tempFilePath: file.tempFilePath
+                }, folderName);
+                
+                uploadedFiles.push({
+                    fileUrl,
+                    fileName: file.name,
+                    fileSize: file.size,
+                    fileType: file.mimetype,
+                    uploadedAt: new Date()
+                });
+            }
         } catch (uploadError) {
             console.error('Google Drive upload error:', uploadError);
-            req.flash('error', 'Error uploading file. Please try again.');
+            req.flash('error', 'Error uploading files. Please try again.');
             return res.redirect(`/exams/${examId}/submit-project`);
         }
 
-        // Only proceed with database operations if file upload was successful
-        if (fileUrl) {
-            // Create submission record
+        // Only proceed with database operations if all files uploaded successfully
+        if (uploadedFiles.length > 0) {
+            // Create submission record with multiple files
+            const projectSubmission = {
+                files: uploadedFiles,
+                submittedAt: new Date()
+            };
+
+            // Add legacy fields for backward compatibility (use first file)
+            if (uploadedFiles.length > 0) {
+                projectSubmission.fileUrl = uploadedFiles[0].fileUrl;
+                projectSubmission.fileName = uploadedFiles[0].fileName;
+                projectSubmission.fileSize = uploadedFiles[0].fileSize;
+                projectSubmission.fileType = uploadedFiles[0].fileType;
+            }
+
             const submission = await Submission.create({
                 examId: exam._id,
                 studentId: req.user._id,
                 submissionType: 'PROJECT',
                 attemptNumber: nextAttemptNumber,
-                projectSubmission: {
-                    fileUrl,
-                    fileName: projectFile.name,
-                    fileSize: projectFile.size,
-                    fileType: projectFile.mimetype,
-                    submittedAt: new Date()
-                },
+                projectSubmission,
                 status: 'SUBMITTED',
                 startedAt: currentAttempt.startTime,
                 submittedAt: new Date()
@@ -1252,7 +1304,7 @@ exports.submitProjectExam = async (req, res) => {
             currentAttempt.submittedAt = new Date();
             await currentAttempt.save();
 
-            // Create initial result record with FAIL status (will be updated when graded)
+            // Create initial result record with PENDING status (will be updated when graded)
             await Result.create({
                 examId: exam._id,
                 studentId: req.user._id,
@@ -1260,7 +1312,7 @@ exports.submitProjectExam = async (req, res) => {
                 totalMarks: exam.projectTotalMarks || exam.totalMarks,
                 obtainedMarks: 0, // Will be updated by teacher
                 percentage: 0, // Will be updated by teacher
-                status: 'FAIL', // Initial status before grading
+                status: 'PENDING', // Changed from FAIL to PENDING for projects
                 analytics: {
                     timeSpent: Math.floor((new Date() - currentAttempt.startTime) / 1000),
                     attemptsCount: nextAttemptNumber,
@@ -1271,12 +1323,15 @@ exports.submitProjectExam = async (req, res) => {
                 }
             });
 
-            req.flash('success', 'Project submitted successfully');
+            // Send notification to teacher
+            await notifyProjectSubmitted(submission._id);
+
+            req.flash('success', `Project submitted successfully with ${uploadedFiles.length} file(s)`);
             return res.redirect(`/exams/${examId}`);
         }
 
         // If we get here, something went wrong with the file upload
-        req.flash('error', 'Error uploading file. Please try again.');
+        req.flash('error', 'Error uploading files. Please try again.');
         return res.redirect(`/exams/${examId}/submit-project`);
     } catch (error) {
         console.error('Error in submitProjectExam:', error);
@@ -1347,6 +1402,18 @@ exports.gradeProjectSubmission = async (req, res) => {
         submission.totalMarksObtained = parsedMarks;
         submission.status = 'GRADED';
 
+        // Add grading history for audit trail
+        if (!submission.gradingHistory) {
+            submission.gradingHistory = [];
+        }
+        submission.gradingHistory.push({
+            gradedBy: req.user._id,
+            gradedAt: new Date(),
+            marks: parsedMarks,
+            feedback: feedback,
+            action: 'GRADED'
+        });
+
         await submission.save();
 
         // First find and update the result to ensure it exists
@@ -1394,6 +1461,9 @@ exports.gradeProjectSubmission = async (req, res) => {
             
             await existingResult.save();
         }
+
+        // Send notification to student
+        await notifyProjectGraded(submission._id);
 
         return res.json({ 
             success: true,

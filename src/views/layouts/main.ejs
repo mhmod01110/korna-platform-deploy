@@ -1077,6 +1077,155 @@
         });
     </script>
 
+    <!-- Notification System -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            const notificationBadge = document.getElementById('notification-badge');
+            const notificationsLoading = document.getElementById('notifications-loading');
+            const notificationsList = document.getElementById('notifications-list');
+
+            // Load notifications when dropdown is opened
+            notificationDropdown.addEventListener('show.bs.dropdown', function() {
+                loadNotifications();
+            });
+
+            // Load unread count on page load
+            updateUnreadCount();
+
+            // Update unread count every 30 seconds
+            setInterval(updateUnreadCount, 30000);
+
+            async function updateUnreadCount() {
+                try {
+                    const response = await fetch('/notifications/unread-count');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        if (data.unreadCount > 0) {
+                            notificationBadge.textContent = data.unreadCount;
+                            notificationBadge.style.display = 'inline';
+                        } else {
+                            notificationBadge.style.display = 'none';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error updating unread count:', error);
+                }
+            }
+
+            async function loadNotifications() {
+                try {
+                    notificationsLoading.style.display = 'block';
+                    notificationsList.innerHTML = '';
+
+                    const response = await fetch('/notifications?limit=5', {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+
+                    notificationsLoading.style.display = 'none';
+
+                    if (data.success && data.notifications.length > 0) {
+                        data.notifications.forEach(notification => {
+                            const notificationElement = createNotificationElement(notification);
+                            notificationsList.appendChild(notificationElement);
+                        });
+                    } else {
+                        notificationsList.innerHTML = `
+                            <li class="text-center p-3 text-muted">
+                                <i class="fas fa-bell-slash mb-2"></i><br>
+                                لا توجد إشعارات جديدة
+                            </li>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error loading notifications:', error);
+                    notificationsLoading.style.display = 'none';
+                    notificationsList.innerHTML = `
+                        <li class="text-center p-3 text-danger">
+                            <i class="fas fa-exclamation-triangle mb-2"></i><br>
+                            خطأ في تحميل الإشعارات
+                        </li>
+                    `;
+                }
+            }
+
+            function createNotificationElement(notification) {
+                const li = document.createElement('li');
+                li.className = 'notification-item';
+                
+                const iconClass = getNotificationIcon(notification.type);
+                const isUnread = notification.status === 'UNREAD';
+                
+                li.innerHTML = `
+                    <a class="dropdown-item ${isUnread ? 'bg-light' : ''}" href="#" onclick="handleNotificationClick('${notification._id}', '${notification.data?.url || '/notifications'}')">
+                        <div class="d-flex align-items-start">
+                            <div class="me-3">
+                                <i class="${iconClass}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 ${isUnread ? 'fw-bold' : ''}">${notification.title}</h6>
+                                <p class="mb-1 small text-muted">${notification.message}</p>
+                                <small class="text-muted">${notification.timeAgo}</small>
+                            </div>
+                            ${isUnread ? '<span class="badge bg-primary rounded-pill">جديد</span>' : ''}
+                        </div>
+                    </a>
+                `;
+
+                return li;
+            }
+
+            function getNotificationIcon(type) {
+                switch(type) {
+                    case 'EXAM_PUBLISHED':
+                        return 'fas fa-file-alt text-primary';
+                    case 'PROJECT_SUBMITTED':
+                        return 'fas fa-upload text-info';
+                    case 'PROJECT_GRADED':
+                        return 'fas fa-star text-warning';
+                    case 'EXAM_GRADED':
+                        return 'fas fa-check-circle text-success';
+                    case 'DEADLINE_REMINDER':
+                        return 'fas fa-clock text-warning';
+                    default:
+                        return 'fas fa-bell text-info';
+                }
+            }
+
+            // Global function for handling notification clicks
+            window.handleNotificationClick = async function(notificationId, url) {
+                try {
+                    // Mark as read
+                    await fetch(`/notifications/${notificationId}/mark-read`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                        }
+                    });
+
+                    // Update unread count
+                    updateUnreadCount();
+
+                    // Navigate to URL
+                    if (url && url !== '/notifications') {
+                        window.location.href = url;
+                    }
+                } catch (error) {
+                    console.error('Error handling notification click:', error);
+                    // Still navigate even if marking as read fails
+                    if (url && url !== '/notifications') {
+                        window.location.href = url;
+                    }
+                }
+            };
+        });
+    </script>
+
     <!-- Custom JavaScript -->
     <script src="/js/main.js"></script>
     <%- defineContent('script') %>
