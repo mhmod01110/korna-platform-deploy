@@ -1,0 +1,263 @@
+<% if ((user.role === 'teacher' || user.role === 'admin') && 
+       (exam.createdBy._id.toString() === user._id.toString() || user.role === 'admin') && 
+       exam.status === 'PUBLISHED') { %>
+    <!-- Grading Buttons -->
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-clipboard-check"></i> التقييم
+        </button>
+        <ul class="dropdown-menu">
+            <li>
+                <a class="dropdown-item" href="/exams/<%= exam._id %>/submissions">
+                    <i class="fas fa-list-ul"></i> عرض جميع التقديمات
+                </a>
+            </li>
+            <% if (exam.type === 'PROJECT') { %>
+                <li>
+                    <a class="dropdown-item" href="#" onclick="loadQuickGrading('<%= exam._id %>', 'PROJECT')">
+                        <i class="fas fa-rocket"></i> تقييم سريع للمشاريع
+                    </a>
+                </li>
+            <% } else { %>
+                <li>
+                    <a class="dropdown-item" href="#" onclick="loadQuickGrading('<%= exam._id %>', 'MCQ')">
+                        <i class="fas fa-check-square"></i> تقييم سريع للاختبارات
+                    </a>
+                </li>
+            <% } %>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item" href="#" onclick="showGradingStats('<%= exam._id %>')">
+                    <i class="fas fa-chart-pie"></i> إحصائيات التقييم
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Quick Grading Modal -->
+    <div class="modal fade" id="quickGradingModal" tabindex="-1" aria-labelledby="quickGradingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="quickGradingModalLabel">التقييم السريع</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="quickGradingContent">
+                        <div class="text-center">
+                            <i class="fas fa-spinner fa-spin"></i> جارٍ التحميل...
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    <a href="/exams/<%= exam._id %>/submissions" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt"></i> عرض جميع التقديمات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grading Stats Modal -->
+    <div class="modal fade" id="gradingStatsModal" tabindex="-1" aria-labelledby="gradingStatsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="gradingStatsModalLabel">إحصائيات التقييم</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="gradingStatsContent">
+                        <div class="text-center">
+                            <i class="fas fa-spinner fa-spin"></i> جارٍ التحميل...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function loadQuickGrading(examId, type) {
+        const modal = new bootstrap.Modal(document.getElementById('quickGradingModal'));
+        document.getElementById('quickGradingModalLabel').textContent = 
+            type === 'PROJECT' ? 'التقييم السريع للمشاريع' : 'التقييم السريع للاختبارات';
+        modal.show();
+        
+        fetch(`/api/exams/${examId}/pending-submissions`)
+            .then(response => response.json())
+            .then(data => {
+                const contentDiv = document.getElementById('quickGradingContent');
+                
+                if (data.success && data.submissions.length > 0) {
+                    let html = `
+                        <div class="mb-3">
+                            <h6>التقديمات المعلقة: ${data.submissions.length}</h6>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>طالب</th>
+                                        <th>تاريخ التقديم</th>
+                                        ${type === 'PROJECT' ? '<th>الملفات</th>' : '<th>الإجابات</th>'}
+                                        <th>العملية</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    data.submissions.forEach(submission => {
+                        const submissionDate = new Date(submission.submittedAt).toLocaleString();
+                        const studentName = `${submission.studentId.firstName} ${submission.studentId.lastName}`;
+                        
+                        html += `
+                            <tr>
+                                <td>
+                                    <strong>${studentName}</strong><br>
+                                    <small class="text-muted">${submission.studentId.email}</small>
+                                </td>
+                                <td>${submissionDate}</td>
+                                <td>
+                        `;
+                        
+                        if (type === 'PROJECT') {
+                            if (submission.projectSubmission && submission.projectSubmission.files) {
+                                html += `
+                                    <span class="badge bg-info">${submission.projectSubmission.files.length} ملفات</span>
+                                    <br>
+                                    <a href="${submission.projectSubmission.fileUrl || submission.projectSubmission.files[0]?.fileUrl}" 
+                                       target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                                        <i class="fas fa-download"></i> عرض
+                                    </a>
+                                `;
+                            } else {
+                                html += '<span class="text-muted">لا توجد ملفات</span>';
+                            }
+                        } else {
+                            html += '<span class="badge bg-secondary">إجابات متعددة الاختيارات</span>';
+                        }
+                        
+                        html += `
+                                </td>
+                                <td>
+                                    <a href="/exams/${examId}/submissions/${submission._id}/grade" 
+                                       class="btn btn-sm btn-success">
+                                        <i class="fas fa-check-circle"></i> تقييم
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    contentDiv.innerHTML = html;
+                } else {
+                    contentDiv.innerHTML = `
+                        <div class="alert alert-success text-center">
+                            <i class="fas fa-check-circle"></i> 
+                            جميع التقديمات تم تقييمها بالفعل!
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading quick grading:', error);
+                document.getElementById('quickGradingContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        حدث خطأ في تحميل البيانات
+                    </div>
+                `;
+            });
+    }
+
+    function showGradingStats(examId) {
+        const modal = new bootstrap.Modal(document.getElementById('gradingStatsModal'));
+        modal.show();
+        
+        fetch(`/api/exams/${examId}/grading-stats`)
+            .then(response => response.json())
+            .then(data => {
+                const contentDiv = document.getElementById('gradingStatsContent');
+                
+                if (data.success) {
+                    const stats = data.stats;
+                    let html = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h5>إجمالي التقديمات</h5>
+                                        <h2>${stats.totalSubmissions}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h5>تم التقييم</h5>
+                                        <h2>${stats.gradedSubmissions}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card bg-warning text-dark">
+                                    <div class="card-body text-center">
+                                        <h5>قيد الانتظار</h5>
+                                        <h2>${stats.pendingSubmissions}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h5>متوسط الدرجات</h5>
+                                        <h2>${stats.averageScore ? stats.averageScore.toFixed(1) : 'N/A'}%</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (stats.pendingSubmissions > 0) {
+                        html += `
+                            <div class="mt-4">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> 
+                                    يوجد ${stats.pendingSubmissions} تقديمات تحتاج إلى تقييم
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    contentDiv.innerHTML = html;
+                } else {
+                    contentDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            حدث خطأ في تحميل الإحصائيات
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading grading stats:', error);
+                document.getElementById('gradingStatsContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        حدث خطأ في تحميل الإحصائيات
+                    </div>
+                `;
+            });
+    }
+    </script>
+<% } %>

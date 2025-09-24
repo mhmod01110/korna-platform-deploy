@@ -38,4 +38,7 @@ router.get('/admin/users/students/:id', isAuth, isAdmin, adminController.getStud
 router.get('/admin/users/students/:id/export-pdf', isAuth, isAdmin, adminController.getExportPDF);
 router.get('/admin/users/students/:id/export-excel', isAuth, isAdmin, adminController.getExportExcel);
 
+// API routes for grading
+router.get('/api/admin/pending-grading', isAuth, isAdmin, adminController.getPendingGrading);
+
 module.exports = router; 
