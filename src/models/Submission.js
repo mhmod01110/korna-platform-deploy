@@ -50,7 +50,8 @@ const tfAnswerSchema = new mongoose.Schema({
     }
 });
 
-const projectSubmissionSchema = new mongoose.Schema({
+// Schema for individual files
+const projectFileSchema = new mongoose.Schema({
     fileUrl: {
         type: String,
         required: [true, "File URL is required"]
@@ -67,6 +68,14 @@ const projectSubmissionSchema = new mongoose.Schema({
         type: String,
         required: [true, "File type is required"]
     },
+    uploadedAt: {
+        type: Date,
+        default: Date.now
+    }
+});
+
+const projectSubmissionSchema = new mongoose.Schema({
+    files: [projectFileSchema], // Array of files instead of single file
     submittedAt: {
         type: Date,
         default: Date.now
@@ -94,7 +103,12 @@ const projectSubmissionSchema = new mongoose.Schema({
         type: Number,
         min: 0,
         max: 100
-    }
+    },
+    // Legacy fields for backward compatibility
+    fileUrl: String,
+    fileName: String,
+    fileSize: Number,
+    fileType: String
 });
 
 const submissionSchema = new mongoose.Schema({
@@ -167,7 +181,24 @@ const submissionSchema = new mongoose.Schema({
             issue: String,
             timestamp: Date
         }]
-    }
+    },
+    gradingHistory: [{
+        gradedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        gradedAt: {
+            type: Date,
+            default: Date.now
+        },
+        marks: Number,
+        feedback: String,
+        action: {
+            type: String,
+            enum: ['GRADED', 'REGRADED', 'REVIEWED'],
+            default: 'GRADED'
+        }
+    }]
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

@@ -1,0 +1,368 @@
+<%- contentFor('body') %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-bell"></i> الإشعارات</h2>
+                <div>
+                    <% if (unreadCount > 0) { %>
+                        <button class="btn btn-outline-primary me-2" onclick="markAllAsRead()">
+                            <i class="fas fa-check-double"></i> تحديد الكل كمقروء
+                        </button>
+                    <% } %>
+                    <span class="badge bg-primary rounded-pill">
+                        <%= unreadCount %> غير مقروء
+                    </span>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <ul class="nav nav-tabs mb-4" id="notificationTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
+                        <i class="fas fa-list"></i> جميع الإشعارات
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="unread-tab" data-bs-toggle="tab" data-bs-target="#unread" type="button" role="tab">
+                        <i class="fas fa-envelope"></i> غير مقروء (<span id="unread-count"><%= unreadCount %></span>)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="exam-tab" data-bs-toggle="tab" data-bs-target="#exam" type="button" role="tab">
+                        <i class="fas fa-file-alt"></i> الاختبارات
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="project-tab" data-bs-toggle="tab" data-bs-target="#project" type="button" role="tab">
+                        <i class="fas fa-project-diagram"></i> المشاريع
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Notifications List -->
+            <div class="tab-content" id="notificationTabContent">
+                <div class="tab-pane fade show active" id="all" role="tabpanel">
+                    <div id="notifications-container">
+                        <% if (notifications.length === 0) { %>
+                            <div class="text-center py-5">
+                                <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">لا توجد إشعارات</h5>
+                                <p class="text-muted">ستظهر الإشعارات هنا عندما تتوفر</p>
+                            </div>
+                        <% } else { %>
+                            <% notifications.forEach(notification => { %>
+                                <div class="notification-item card mb-3 <%= notification.status === 'UNREAD' ? 'border-primary' : '' %>" 
+                                     data-id="<%= notification._id %>" 
+                                     data-type="<%= notification.type %>"
+                                     data-status="<%= notification.status %>">
+                                    <div class="card-body">
+                                        <div class="row align-items-start">
+                                            <div class="col-auto">
+                                                <div class="notification-icon">
+                                                    <% if (notification.type.includes('EXAM')) { %>
+                                                        <i class="fas fa-file-alt text-primary"></i>
+                                                    <% } else if (notification.type.includes('PROJECT')) { %>
+                                                        <i class="fas fa-project-diagram text-success"></i>
+                                                    <% } else if (notification.type.includes('GRADE')) { %>
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    <% } else { %>
+                                                        <i class="fas fa-info-circle text-info"></i>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                            <div class="col">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="mb-1 <%= notification.status === 'UNREAD' ? 'fw-bold' : '' %>">
+                                                            <%= notification.title %>
+                                                            <% if (notification.status === 'UNREAD') { %>
+                                                                <span class="badge bg-primary ms-2">جديد</span>
+                                                            <% } %>
+                                                        </h6>
+                                                        <p class="mb-2 text-muted"><%= notification.message %></p>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-clock"></i> <%= notification.timeAgo %>
+                                                            <% if (notification.sender) { %>
+                                                                | من: <%= notification.sender.firstName %> <%= notification.sender.lastName %>
+                                                            <% } %>
+                                                        </small>
+                                                    </div>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                                            <i class="fas fa-ellipsis-v"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <% if (notification.status === 'UNREAD') { %>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="#" onclick="markAsRead('<%= notification._id %>')">
+                                                                        <i class="fas fa-check"></i> تحديد كمقروء
+                                                                    </a>
+                                                                </li>
+                                                            <% } %>
+                                                            <% if (notification.data && notification.data.url) { %>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="<%= notification.data.url %>" onclick="markAsRead('<%= notification._id %>')">
+                                                                        <i class="fas fa-external-link-alt"></i> عرض التفاصيل
+                                                                    </a>
+                                                                </li>
+                                                            <% } %>
+                                                            <li>
+                                                                <a class="dropdown-item" href="#" onclick="archiveNotification('<%= notification._id %>')">
+                                                                    <i class="fas fa-archive"></i> أرشف
+                                                                </a>
+                                                            </li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li>
+                                                                <a class="dropdown-item text-danger" href="#" onclick="deleteNotification('<%= notification._id %>')">
+                                                                    <i class="fas fa-trash"></i> حذف
+                                                                </a>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        <% } %>
+                    </div>
+
+                    <!-- Pagination -->
+                    <% if (pagination.totalPages > 1) { %>
+                        <nav aria-label="Notifications pagination">
+                            <ul class="pagination justify-content-center">
+                                <% if (pagination.currentPage > 1) { %>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=<%= pagination.currentPage - 1 %>">السابق</a>
+                                    </li>
+                                <% } %>
+                                
+                                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                                    <li class="page-item <%= pagination.currentPage === i ? 'active' : '' %>">
+                                        <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                                    </li>
+                                <% } %>
+                                
+                                <% if (pagination.currentPage < pagination.totalPages) { %>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=<%= pagination.currentPage + 1 %>">التالي</a>
+                                    </li>
+                                <% } %>
+                            </ul>
+                        </nav>
+                    <% } %>
+                </div>
+                
+                <!-- Other tab content will be loaded via AJAX -->
+                <div class="tab-pane fade" id="unread" role="tabpanel">
+                    <div class="text-center py-3">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="exam" role="tabpanel">
+                    <div class="text-center py-3">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="project" role="tabpanel">
+                    <div class="text-center py-3">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Notification management functions
+async function markAsRead(notificationId) {
+    try {
+        const response = await fetch(`/notifications/${notificationId}/mark-read`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': '<%= csrfToken %>'
+            }
+        });
+
+        if (response.ok) {
+            const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+            if (notificationElement) {
+                notificationElement.classList.remove('border-primary');
+                notificationElement.setAttribute('data-status', 'read');
+                
+                const badge = notificationElement.querySelector('.badge');
+                if (badge) badge.remove();
+                
+                const title = notificationElement.querySelector('h6');
+                if (title) title.classList.remove('fw-bold');
+            }
+            
+            updateUnreadCount();
+        }
+    } catch (error) {
+        console.error('Error marking as read:', error);
+    }
+}
+
+async function markAllAsRead() {
+    try {
+        const response = await fetch('/notifications/mark-all-read', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': '<%= csrfToken %>'
+            }
+        });
+
+        if (response.ok) {
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error marking all as read:', error);
+    }
+}
+
+async function archiveNotification(notificationId) {
+    try {
+        const response = await fetch(`/notifications/${notificationId}/archive`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': '<%= csrfToken %>'
+            }
+        });
+
+        if (response.ok) {
+            const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+            if (notificationElement) {
+                notificationElement.style.opacity = '0.5';
+                setTimeout(() => notificationElement.remove(), 300);
+            }
+        }
+    } catch (error) {
+        console.error('Error archiving notification:', error);
+    }
+}
+
+async function deleteNotification(notificationId) {
+    if (!confirm('هل أنت متأكد من حذف هذا الإشعار؟')) return;
+    
+    try {
+        const response = await fetch(`/notifications/${notificationId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': '<%= csrfToken %>'
+            }
+        });
+
+        if (response.ok) {
+            const notificationElement = document.querySelector(`[data-id="${notificationId}"]`);
+            if (notificationElement) {
+                notificationElement.style.opacity = '0';
+                setTimeout(() => notificationElement.remove(), 300);
+            }
+        }
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+    }
+}
+
+async function updateUnreadCount() {
+    try {
+        const response = await fetch('/notifications/unread-count');
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('unread-count').textContent = data.unreadCount;
+            
+            // Update navbar badge if exists
+            const navbarBadge = document.querySelector('#notification-badge');
+            if (navbarBadge) {
+                navbarBadge.textContent = data.unreadCount;
+                navbarBadge.style.display = data.unreadCount > 0 ? 'inline' : 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Error updating unread count:', error);
+    }
+}
+
+// Load tab content via AJAX
+document.addEventListener('shown.bs.tab', async function(event) {
+    const target = event.target.getAttribute('data-bs-target');
+    const tabPane = document.querySelector(target);
+    
+    if (target === '#unread' || target === '#exam' || target === '#project') {
+        const type = target.replace('#', '');
+        let url = '/notifications?';
+        
+        if (type === 'unread') {
+            url += 'status=UNREAD';
+        } else if (type === 'exam') {
+            url += 'type=EXAM_PUBLISHED,EXAM_GRADED';
+        } else if (type === 'project') {
+            url += 'type=PROJECT_SUBMITTED,PROJECT_GRADED';
+        }
+        
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Generate HTML for notifications
+                let html = '';
+                if (data.notifications.length === 0) {
+                    html = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">لا توجد إشعارات</h5>
+                        </div>
+                    `;
+                } else {
+                    // Generate notification HTML (simplified version)
+                    data.notifications.forEach(notification => {
+                        html += `
+                            <div class="notification-item card mb-3 ${notification.status === 'UNREAD' ? 'border-primary' : ''}" data-id="${notification._id}">
+                                <div class="card-body">
+                                    <h6 class="mb-1 ${notification.status === 'UNREAD' ? 'fw-bold' : ''}">
+                                        ${notification.title}
+                                        ${notification.status === 'UNREAD' ? '<span class="badge bg-primary ms-2">جديد</span>' : ''}
+                                    </h6>
+                                    <p class="mb-2 text-muted">${notification.message}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> ${notification.timeAgo}
+                                    </small>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                tabPane.innerHTML = html;
+            }
+        } catch (error) {
+            console.error('Error loading tab content:', error);
+            tabPane.innerHTML = '<div class="alert alert-danger">خطأ في تحميل الإشعارات</div>';
+        }
+    }
+});
+</script>
