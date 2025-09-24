@@ -153,13 +153,23 @@ exports.getHome = async (req, res) => {
             totalQuestions: await Question.countDocuments(
                 req.session.user.role === 'teacher' ? { 'examId.createdBy': req.session.user._id } : {}
             ),
-            totalSubmissions: await Submission.countDocuments(submissionsQuery)
+            totalSubmissions: await Submission.countDocuments(submissionsQuery),
+            pendingGrades: await Submission.countDocuments({
+                ...submissionsQuery,
+                status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
+            })
         };
 
         // Add total users count for admin
         if (req.session.user.role === 'admin') {
             stats.totalUsers = await User.countDocuments();
         }
+        
+        // Add active exams count
+        stats.activeExams = await Exam.countDocuments({
+            ...query,
+            status: 'PUBLISHED'
+        });
 
         // Get top 5 students for Hall of Fame
        const topStudents = await Result.aggregate([

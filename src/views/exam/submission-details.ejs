@@ -29,8 +29,11 @@
                         </div>
                         <div class="card-body">
                             <p><strong>الحالة:</strong> 
-                                <span class="badge badge-<%= submission.status === 'SUBMITTED' ? 'success' : 'warning' %>">
-                                    <%= submission.status %>
+                                <span class="badge badge-<%= 
+                                    submission.status === 'GRADED' ? 'success' : 
+                                    submission.status === 'PENDING_REVIEW' ? 'warning' : 
+                                    'secondary' %>">
+                                    <%= submission.status === 'PENDING_REVIEW' ? 'قيد المراجعة' : submission.status %>
                                 </span>
                             </p>
                             <p><strong>تاريخ التقديم:</strong> <%= submission.submittedAt.toLocaleString() %></p>

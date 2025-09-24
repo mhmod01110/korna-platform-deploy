@@ -35,7 +35,8 @@
                     <div>
                         <span class="badge bg-info">
                             إجمالي: <%= submissions.length %> | 
-                            غير مقيم: <%= submissions.filter(s => s.status !== 'GRADED').length %>
+                            غير مقيم: <%= submissions.filter(s => s.status !== 'GRADED').length %> |
+                            قيد المراجعة: <%= submissions.filter(s => s.status === 'PENDING_REVIEW').length %>
                         </span>
                     </div>
                 </div>
@@ -73,8 +74,11 @@
                                     </td>
                                     <td><%= new Date(submission.submittedAt).toLocaleString() %></td>
                                     <td>
-                                        <span class="badge bg-<%= submission.status === 'GRADED' ? 'success' : 'warning' %>">
-                                            <%= submission.status %>
+                                        <span class="badge bg-<%= 
+                                            submission.status === 'GRADED' ? 'success' : 
+                                            submission.status === 'PENDING_REVIEW' ? 'warning' : 
+                                            'secondary' %>">
+                                            <%= submission.status === 'PENDING_REVIEW' ? 'قيد المراجعة' : submission.status %>
                                             <% if (submission.status === 'GRADED') { %>
                                                 (<%= submission.projectSubmission.marksObtained %>/<%= submission.examId.totalMarks %>)
                                             <% } %>
@@ -90,14 +94,43 @@
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="<%= submission.projectSubmission.fileUrl %>" 
-                                               target="_blank"
-                                               class="btn btn-sm btn-info">
-                                                <i class="fas fa-download"></i> عرض التقديم
-                                            </a>
+                                            <% if (submission.projectSubmission.files && submission.projectSubmission.files.length > 0) { %>
+                                                <!-- Multiple files (new format) -->
+                                                <% if (submission.projectSubmission.files.length === 1) { %>
+                                                    <a href="<%= submission.projectSubmission.files[0].fileUrl %>" 
+                                                       target="_blank"
+                                                       class="btn btn-sm btn-info">
+                                                        <i class="fas fa-download"></i> عرض التقديم
+                                                    </a>
+                                                <% } else { %>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-bs-toggle="dropdown">
+                                                            <i class="fas fa-download"></i> عرض الملفات (<%= submission.projectSubmission.files.length %>)
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <% submission.projectSubmission.files.forEach((file, index) => { %>
+                                                                <li>
+                                                                    <a class="dropdown-item" href="<%= file.fileUrl %>" target="_blank">
+                                                                        <i class="fas fa-file"></i> <%= file.fileName %>
+                                                                    </a>
+                                                                </li>
+                                                            <% }); %>
+                                                        </ul>
+                                                    </div>
+                                                <% } %>
+                                            <% } else if (submission.projectSubmission.fileUrl) { %>
+                                                <!-- Single file (legacy format) -->
+                                                <a href="<%= submission.projectSubmission.fileUrl %>" 
+                                                   target="_blank"
+                                                   class="btn btn-sm btn-info">
+                                                    <i class="fas fa-download"></i> عرض التقديم
+                                                </a>
+                                            <% } else { %>
+                                                <span class="text-muted">لا توجد ملفات</span>
+                                            <% } %>
                                             <a href="/exams/<%= exam._id %>/submissions/<%= submission._id %>/grade" 
-                                               class="btn btn-sm btn-primary">
-                                                <i class="fas fa-check-circle"></i> 
+                                               class="btn btn-sm <%= submission.status === 'GRADED' ? 'btn-warning' : 'btn-primary' %>">
+                                                <i class="fas fa-<%= submission.status === 'GRADED' ? 'edit' : 'check-circle' %>"></i> 
                                                 <%= submission.status === 'GRADED' ? 'تحديث الدرجة' : 'تقييم' %>
                                             </a>
                                         </div>

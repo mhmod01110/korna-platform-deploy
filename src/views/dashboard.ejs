@@ -511,14 +511,46 @@
                                                         <td><%= submission.examId.title %></td>
                                                         <td><%= new Date(submission.submittedAt).toLocaleString() %></td>
                                                         <td>
-                                                            <a href="<%= submission.projectSubmission.fileUrl %>" target="_blank" 
-                                                               class="btn btn-sm btn-info">
-                                                                <i class="fas fa-download"></i> تحميل
-                                                            </a>
+                                                            <% if (submission.projectSubmission.files && submission.projectSubmission.files.length > 0) { %>
+                                                                <!-- Multiple files (new format) -->
+                                                                <% if (submission.projectSubmission.files.length === 1) { %>
+                                                                    <a href="<%= submission.projectSubmission.files[0].fileUrl %>" 
+                                                                       target="_blank"
+                                                                       class="btn btn-sm btn-info">
+                                                                        <i class="fas fa-download"></i> تحميل
+                                                                    </a>
+                                                                <% } else { %>
+                                                                    <div class="btn-group">
+                                                                        <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-bs-toggle="dropdown">
+                                                                            <i class="fas fa-download"></i> ملفات (<%= submission.projectSubmission.files.length %>)
+                                                                        </button>
+                                                                        <ul class="dropdown-menu">
+                                                                            <% submission.projectSubmission.files.forEach((file, index) => { %>
+                                                                                <li>
+                                                                                    <a class="dropdown-item" href="<%= file.fileUrl %>" target="_blank">
+                                                                                        <i class="fas fa-file"></i> <%= file.fileName.substring(0, 25) %><%= file.fileName.length > 25 ? '...' : '' %>
+                                                                                    </a>
+                                                                                </li>
+                                                                            <% }); %>
+                                                                        </ul>
+                                                                    </div>
+                                                                <% } %>
+                                                            <% } else if (submission.projectSubmission.fileUrl) { %>
+                                                                <!-- Single file (legacy format) -->
+                                                                <a href="<%= submission.projectSubmission.fileUrl %>" target="_blank" 
+                                                                   class="btn btn-sm btn-info">
+                                                                    <i class="fas fa-download"></i> تحميل
+                                                                </a>
+                                                            <% } else { %>
+                                                                <span class="text-muted">لا توجد ملفات</span>
+                                                            <% } %>
                                                         </td>
                                                         <td>
-                                                            <span class="badge bg-<%= submission.status === 'GRADED' ? 'success' : 'warning' %>">
-                                                                <%= submission.status %>
+                                                            <span class="badge bg-<%= 
+                                                                submission.status === 'GRADED' ? 'success' : 
+                                                                submission.status === 'PENDING_REVIEW' ? 'warning' : 
+                                                                'secondary' %>">
+                                                                <%= submission.status === 'PENDING_REVIEW' ? 'قيد المراجعة' : submission.status %>
                                                             </span>
                                                         </td>
                                                         <td>

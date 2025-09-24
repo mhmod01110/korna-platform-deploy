@@ -1294,7 +1294,7 @@ exports.submitProjectExam = async (req, res) => {
                 submissionType: 'PROJECT',
                 attemptNumber: nextAttemptNumber,
                 projectSubmission,
-                status: 'SUBMITTED',
+                status: 'PENDING_REVIEW', // Changed from SUBMITTED to PENDING_REVIEW
                 startedAt: currentAttempt.startTime,
                 submittedAt: new Date()
             });
@@ -1560,7 +1560,7 @@ exports.getPendingSubmissions = async (req, res) => {
         
         const submissions = await Submission.find({ 
             examId: examId,
-            status: { $ne: 'GRADED' }
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')

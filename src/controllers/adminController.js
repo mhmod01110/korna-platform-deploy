@@ -16,7 +16,7 @@ exports.getDashboard = async (req, res, next) => {
             totalExams: await Exam.countDocuments(),
             totalResults: await Result.countDocuments(),
             totalDepartments: await Department.countDocuments(),
-            pendingGrades: await Submission.countDocuments({ status: { $ne: 'GRADED' } })
+            pendingGrades: await Submission.countDocuments({ status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] } })
         };
 
         // Get recent users
@@ -45,7 +45,7 @@ exports.getDashboard = async (req, res, next) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -179,7 +179,7 @@ exports.getUsers = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -238,7 +238,7 @@ exports.postCreateUser = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -280,7 +280,7 @@ exports.getEditUser = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -332,7 +332,7 @@ exports.postEditUser = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -382,7 +382,7 @@ exports.deleteUser = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -420,7 +420,7 @@ exports.getDepartments = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -457,7 +457,7 @@ exports.createDepartment = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -493,7 +493,7 @@ exports.updateDepartment = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -528,7 +528,7 @@ exports.deleteDepartment = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -573,7 +573,7 @@ exports.getSettings = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -612,7 +612,7 @@ exports.updateSettings = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -658,7 +658,7 @@ exports.getExamReports = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -703,7 +703,7 @@ exports.getUserReports = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -855,7 +855,7 @@ exports.getPerformanceReports = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -938,7 +938,7 @@ exports.getReports = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -1013,7 +1013,7 @@ exports.getStudentProgress = async (req, res) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -1066,7 +1066,7 @@ exports.postAddStaff = async (req, res, next) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -1107,7 +1107,7 @@ exports.postToggleUserStatus = async (req, res, next) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -1178,7 +1178,7 @@ exports.getExportPDF = async (req, res, next) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -1249,7 +1249,7 @@ exports.getExportExcel = async (req, res, next) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')
@@ -1367,7 +1367,7 @@ exports.exportUsersExcel = async (req, res, next) => {
 exports.getPendingGrading = async (req, res, next) => {
     try {
         const submissions = await Submission.find({ 
-            status: { $ne: 'GRADED' } 
+            status: { $in: ['PENDING_REVIEW', 'SUBMITTED'] }
         })
         .populate('studentId', 'firstName lastName email')
         .populate('examId', 'title type')

@@ -110,7 +110,8 @@
                                 </div>
                             <% } else { %>
                                 <div class="alert alert-warning">
-                                    <i class="fas fa-clock"></i> في انتظار التقييم
+                                    <i class="fas fa-clock"></i> 
+                                    <%= existingSubmission.status === 'PENDING_REVIEW' ? 'قيد المراجعة من قبل المدرس' : 'في انتظار التقييم' %>
                                 </div>
                             <% } %>
                         </div>
