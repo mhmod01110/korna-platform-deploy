@@ -1304,7 +1304,7 @@ exports.submitProjectExam = async (req, res) => {
             currentAttempt.submittedAt = new Date();
             await currentAttempt.save();
 
-            // Create initial result record with PENDING status (will be updated when graded)
+            // Create initial result record with UNDER_REVIEW status (will be updated when graded)
             await Result.create({
                 examId: exam._id,
                 studentId: req.user._id,
@@ -1312,7 +1312,7 @@ exports.submitProjectExam = async (req, res) => {
                 totalMarks: exam.projectTotalMarks || exam.totalMarks,
                 obtainedMarks: 0, // Will be updated by teacher
                 percentage: 0, // Will be updated by teacher
-                status: 'PENDING', // Changed from FAIL to PENDING for projects
+                status: 'UNDER_REVIEW', // Projects start as under review, not with marks
                 analytics: {
                     timeSpent: Math.floor((new Date() - currentAttempt.startTime) / 1000),
                     attemptsCount: nextAttemptNumber,

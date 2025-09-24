@@ -183,12 +183,14 @@
                                                             <% } %>
                                                         </td>
                                                         <td>
-                                                            <% if (true) { %>
-                                                                <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
-                                                                    <%= result.status %>
+                                                            <% if (result.status === 'UNDER_REVIEW' || result.status === 'PENDING') { %>
+                                                                <span class="badge bg-warning text-dark">
+                                                                    قيد المراجعة
                                                                 </span>
                                                             <% } else { %>
-                                                                <span class="badge bg-secondary">قيد الإنتظار</span>
+                                                                <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                                                    <%= result.status === 'PASS' ? 'نجح' : result.status === 'FAIL' ? 'فشل' : result.status %>
+                                                                </span>
                                                             <% } %>
                                                         </td>
                                                         <td>
@@ -274,12 +276,14 @@
                                                             <% } %>
                                                         </td>
                                                         <td>
-                                                            <% if (true) { %>
-                                                                <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
-                                                                    <%= result.status %>
+                                                            <% if (result.status === 'UNDER_REVIEW' || result.status === 'PENDING') { %>
+                                                                <span class="badge bg-warning text-dark">
+                                                                    قيد المراجعة
                                                                 </span>
                                                             <% } else { %>
-                                                                <span class="badge bg-secondary">قيد الإنتظار</span>
+                                                                <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                                                    <%= result.status === 'PASS' ? 'نجح' : result.status === 'FAIL' ? 'فشل' : result.status %>
+                                                                </span>
                                                             <% } %>
                                                         </td>
                                                         <td>

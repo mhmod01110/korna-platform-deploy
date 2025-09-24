@@ -25,10 +25,17 @@
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h2 class="mb-0"><%= exam.title %> - النتائج</h2>
                 <div>
-                    <span class="badge bg-light text-dark me-2">الدرجة: <%= result.grade %></span>
-                    <span class="badge bg-light text-dark">
-                        الدرجة: <%= result.obtainedMarks %>/<%= result.totalMarks %> (<%= result.percentage.toFixed(2) %>%)
-                    </span>
+                    <% if (result.status === 'UNDER_REVIEW' || result.status === 'PENDING') { %>
+                        <span class="badge bg-warning text-dark me-2">قيد المراجعة</span>
+                        <span class="badge bg-light text-dark">
+                            لم يتم التقييم بعد
+                        </span>
+                    <% } else { %>
+                        <span class="badge bg-light text-dark me-2">الدرجة: <%= result.grade %></span>
+                        <span class="badge bg-light text-dark">
+                            الدرجة: <%= result.obtainedMarks %>/<%= result.totalMarks %> (<%= result.percentage.toFixed(2) %>%)
+                        </span>
+                    <% } %>
                 </div>
             </div>
         
@@ -40,9 +47,15 @@
                     <div class="col-md-6">
                         <p><strong>الاسم:</strong> <%= result.studentId.firstName %> <%= result.studentId.lastName %></p>
                         <p><strong>الحالة:</strong> 
-                            <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
-                                <%= result.status %>
-                            </span>
+                            <% if (result.status === 'UNDER_REVIEW' || result.status === 'PENDING') { %>
+                                <span class="badge bg-warning text-dark">
+                                    قيد المراجعة
+                                </span>
+                            <% } else { %>
+                                <span class="badge bg-<%= result.status === 'PASS' ? 'success' : 'danger' %>">
+                                    <%= result.status === 'PASS' ? 'نجح' : result.status === 'FAIL' ? 'فشل' : result.status %>
+                                </span>
+                            <% } %>
                         </p>
                     </div>
                     <div class="col-md-6">
@@ -60,9 +73,13 @@
                         <div class="card bg-light">
                             <div class="card-body text-center">
                                 <h5>معدل الدرجات</h5>
-                                <h3 class="text-<%= result.percentage >= 60 ? 'success' : 'danger' %>">
-                                    <%= result.analytics.accuracyRate.toFixed(1) %>%
-                                </h3>
+                                <% if (result.status === 'UNDER_REVIEW' || result.status === 'PENDING') { %>
+                                    <h3 class="text-warning">قيد التقييم</h3>
+                                <% } else { %>
+                                    <h3 class="text-<%= result.percentage >= 60 ? 'success' : 'danger' %>">
+                                        <%= result.analytics.accuracyRate.toFixed(1) %>%
+                                    </h3>
+                                <% } %>
                             </div>
                         </div>
                     </div>
@@ -128,31 +145,78 @@
                     <div class="card">
                         <div class="card-body">
                             <% if (submission.projectSubmission) { %>
-                                <!-- Project File -->
+                                <!-- Project Files -->
                                 <div class="mb-4">
-                                    <h5>ملف التقديم</h5>
-                                    <p>
-                                        <strong>اسم الملف:</strong> <%= submission.projectSubmission.fileName %><br>
-                                        <strong>تاريخ التقديم:</strong> <%= new Date(submission.projectSubmission.submittedAt).toLocaleString() %><br>
-                                        <% if (submission.projectSubmission.fileUrl) { %>
-                                            <a href="<%= submission.projectSubmission.fileUrl %>" class="btn btn-sm btn-primary mt-2" target="_blank">
-                                                <i class="fas fa-download"></i> تحميل ملف المشروع
-                                            </a>
-                                        <% } %>
-                                    </p>
+                                    <h5>ملفات التقديم</h5>
+                                    <p><strong>تاريخ التقديم:</strong> <%= new Date(submission.projectSubmission.submittedAt).toLocaleString() %></p>
+                                    
+                                    <% if (submission.projectSubmission.files && submission.projectSubmission.files.length > 0) { %>
+                                        <!-- Multiple files (new format) -->
+                                        <p><strong>عدد الملفات:</strong> <%= submission.projectSubmission.files.length %></p>
+                                        <div class="row">
+                                            <% submission.projectSubmission.files.forEach((file, index) => { %>
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="card border-secondary">
+                                                        <div class="card-body p-3">
+                                                            <h6 class="card-title mb-2">
+                                                                <i class="fas fa-file"></i> ملف <%= index + 1 %>
+                                                            </h6>
+                                                            <p class="card-text small mb-2">
+                                                                <strong>اسم الملف:</strong> <%= file.fileName %><br>
+                                                                <strong>الحجم:</strong> <%= (file.fileSize / (1024 * 1024)).toFixed(2) %> MB<br>
+                                                                <strong>النوع:</strong> <%= file.fileType %><br>
+                                                                <strong>تاريخ الرفع:</strong> <%= new Date(file.uploadedAt).toLocaleString() %>
+                                                            </p>
+                                                            <a href="<%= file.fileUrl %>" class="btn btn-sm btn-primary" target="_blank">
+                                                                <i class="fas fa-download"></i> تحميل
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <% }); %>
+                                        </div>
+                                    <% } else if (submission.projectSubmission.fileUrl) { %>
+                                        <!-- Single file (legacy format) -->
+                                        <div class="card border-secondary">
+                                            <div class="card-body">
+                                                <p>
+                                                    <strong>اسم الملف:</strong> <%= submission.projectSubmission.fileName %><br>
+                                                    <% if (submission.projectSubmission.fileSize) { %>
+                                                        <strong>الحجم:</strong> <%= (submission.projectSubmission.fileSize / (1024 * 1024)).toFixed(2) %> MB<br>
+                                                    <% } %>
+                                                    <% if (submission.projectSubmission.fileType) { %>
+                                                        <strong>النوع:</strong> <%= submission.projectSubmission.fileType %><br>
+                                                    <% } %>
+                                                </p>
+                                                <a href="<%= submission.projectSubmission.fileUrl %>" class="btn btn-sm btn-primary mt-2" target="_blank">
+                                                    <i class="fas fa-download"></i> تحميل ملف المشروع
+                                                </a>
+                                            </div>
+                                        </div>
+                                    <% } else { %>
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> لا توجد ملفات مقدمة.
+                                        </div>
+                                    <% } %>
                                 </div>
 
                                 <!-- Teacher's Feedback -->
                                 <div class="mb-4">
                                     <h5>تعليق المدرس</h5>
-                                    <div class="card bg-light">
-                                        <div class="card-body">
-                                            <p class="mb-0"><%= submission.projectSubmission.feedback.text %></p>
-                                            <small class="text-muted mt-2 d-block">
-                                                تعليق معطى في: <%= new Date(submission.projectSubmission.feedback.givenAt).toLocaleString() %>
-                                            </small>
+                                    <% if (submission.projectSubmission.feedback && submission.projectSubmission.feedback.text) { %>
+                                        <div class="card bg-light">
+                                            <div class="card-body">
+                                                <p class="mb-0"><%= submission.projectSubmission.feedback.text %></p>
+                                                <small class="text-muted mt-2 d-block">
+                                                    تعليق معطى في: <%= new Date(submission.projectSubmission.feedback.givenAt).toLocaleString() %>
+                                                </small>
+                                            </div>
                                         </div>
-                                    </div>
+                                    <% } else { %>
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i> لم يتم تقديم تعليق من المدرس بعد.
+                                        </div>
+                                    <% } %>
                                 </div>
                             <% } else { %>
                                 <div class="alert alert-info">
