@@ -74,27 +74,47 @@
                                     <td><%= new Date(submission.submittedAt).toLocaleString() %></td>
                                     <td>
                                         <span class="badge bg-<%= submission.status === 'GRADED' ? 'success' : 'warning' %>">
-                                            <%= submission.status %>
+                                            <%= submission.status === 'GRADED' ? 'مُقيَّم' : 'قيد المراجعة' %>
                                             <% if (submission.status === 'GRADED') { %>
-                                                (<%= submission.projectSubmission.marksObtained %>/<%= submission.examId.totalMarks %>)
+                                                (<%= submission.projectSubmission.marksObtained %>/<%= submission.examId.projectTotalMarks || submission.examId.totalMarks %>)
                                             <% } %>
                                         </span>
                                     </td>
                                     <td>
                                         <% if (submission.status === 'GRADED') { %>
-                                            <%= submission.projectSubmission.marksObtained %>/<%= exam.totalMarks %>
-                                            (<%= ((submission.projectSubmission.marksObtained / exam.totalMarks) * 100).toFixed(1) %>%)
+                                            <%= submission.projectSubmission.marksObtained %>/<%= exam.projectTotalMarks || exam.totalMarks %>
+                                            (<%= ((submission.projectSubmission.marksObtained / (exam.projectTotalMarks || exam.totalMarks)) * 100).toFixed(1) %>%)
                                         <% } else { %>
-                                            Pending
+                                            قيد المراجعة
                                         <% } %>
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="<%= submission.projectSubmission.fileUrl %>" 
-                                               target="_blank"
-                                               class="btn btn-sm btn-info">
-                                                <i class="fas fa-download"></i> عرض التقديم
-                                            </a>
+                                            <% if (submission.projectSubmission.files && submission.projectSubmission.files.length > 0) { %>
+                                                <!-- Multiple files (new format) -->
+                                                <div class="btn-group">
+                                                    <button type="button" class="btn btn-sm btn-info dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <i class="fas fa-download"></i> عرض الملفات (<%= submission.projectSubmission.files.length %>)
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <% submission.projectSubmission.files.forEach((file, index) => { %>
+                                                            <li>
+                                                                <a class="dropdown-item" href="<%= file.fileUrl %>" target="_blank">
+                                                                    <i class="fas fa-file"></i> <%= file.fileName %>
+                                                                    <small class="text-muted">(<%= Math.round(file.fileSize / 1024) %> KB)</small>
+                                                                </a>
+                                                            </li>
+                                                        <% }); %>
+                                                    </ul>
+                                                </div>
+                                            <% } else if (submission.projectSubmission.fileUrl) { %>
+                                                <!-- Single file (legacy format) -->
+                                                <a href="<%= submission.projectSubmission.fileUrl %>" 
+                                                   target="_blank"
+                                                   class="btn btn-sm btn-info">
+                                                    <i class="fas fa-download"></i> عرض التقديم
+                                                </a>
+                                            <% } %>
                                             <a href="/exams/<%= exam._id %>/submissions/<%= submission._id %>/grade" 
                                                class="btn btn-sm btn-primary">
                                                 <i class="fas fa-check-circle"></i> 

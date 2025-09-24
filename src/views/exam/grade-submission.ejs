@@ -26,34 +26,67 @@
                 </p>
             </div>
 
-            <!-- Project File -->
+            <!-- Project Files -->
             <div class="mb-4">
                 <h5>المشروع المقدم</h5>
                 <div class="card">
                     <div class="card-body">
-                        <p class="mb-2">
-                            <strong>اسم الملف:</strong> <%= submission.projectSubmission.fileName %>
-                        </p>
-                        <p class="mb-2">
-                            <strong>نوع الملف:</strong> <%= submission.projectSubmission.fileType %>
-                        </p>
-                        <div class="mb-3">
-                            <a href="<%= submission.projectSubmission.fileUrl %>" 
-                               target="_blank" 
-                               class="btn btn-primary">
-                                <i class="fas fa-download"></i> تحميل المشروع
-                            </a>
-                        </div>
-                        
-                        <!-- File Preview -->
-                        <% if (submission.projectSubmission.fileType.startsWith('image/')) { %>
-                            <div class="mt-3">
-                                <h6>المعاينة:</h6>
-                                <img src="<%= submission.projectSubmission.fileUrl %>" 
-                                     alt="Project Preview" 
-                                     class="img-fluid" 
-                                     style="max-height: 300px;">
+                        <% if (submission.projectSubmission.files && submission.projectSubmission.files.length > 0) { %>
+                            <!-- Multiple files (new format) -->
+                            <p class="mb-3"><strong>عدد الملفات:</strong> <%= submission.projectSubmission.files.length %></p>
+                            <div class="row">
+                                <% submission.projectSubmission.files.forEach((file, index) => { %>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card border-secondary">
+                                            <div class="card-body p-3">
+                                                <h6 class="card-title text-truncate" title="<%= file.fileName %>">
+                                                    <i class="fas fa-file"></i> <%= file.fileName %>
+                                                </h6>
+                                                <p class="card-text small mb-2">
+                                                    <strong>النوع:</strong> <%= file.fileType %><br>
+                                                    <strong>الحجم:</strong> <%= Math.round(file.fileSize / 1024) %> KB
+                                                </p>
+                                                <a href="<%= file.fileUrl %>" target="_blank" class="btn btn-sm btn-primary me-2">
+                                                    <i class="fas fa-download"></i> تحميل
+                                                </a>
+                                                
+                                                <!-- File Preview for images -->
+                                                <% if (file.fileType.startsWith('image/')) { %>
+                                                    <button type="button" class="btn btn-sm btn-info" onclick="showImagePreview('<%= file.fileUrl %>', '<%= file.fileName %>')">
+                                                        <i class="fas fa-eye"></i> معاينة
+                                                    </button>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
                             </div>
+                        <% } else if (submission.projectSubmission.fileUrl) { %>
+                            <!-- Single file (legacy format) -->
+                            <p class="mb-2">
+                                <strong>اسم الملف:</strong> <%= submission.projectSubmission.fileName %>
+                            </p>
+                            <p class="mb-2">
+                                <strong>نوع الملف:</strong> <%= submission.projectSubmission.fileType %>
+                            </p>
+                            <div class="mb-3">
+                                <a href="<%= submission.projectSubmission.fileUrl %>" 
+                                   target="_blank" 
+                                   class="btn btn-primary">
+                                    <i class="fas fa-download"></i> تحميل المشروع
+                                </a>
+                            </div>
+                            
+                            <!-- File Preview -->
+                            <% if (submission.projectSubmission.fileType.startsWith('image/')) { %>
+                                <div class="mt-3">
+                                    <h6>المعاينة:</h6>
+                                    <img src="<%= submission.projectSubmission.fileUrl %>" 
+                                         alt="Project Preview" 
+                                         class="img-fluid" 
+                                         style="max-height: 300px;">
+                                </div>
+                            <% } %>
                         <% } %>
                     </div>
                 </div>
@@ -108,8 +141,31 @@
     </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imagePreviewModalLabel">معاينة الصورة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="previewImage" src="" alt="Preview" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Grading Script -->
 <script>
+// Image preview function
+function showImagePreview(imageUrl, fileName) {
+    document.getElementById('imagePreviewModalLabel').textContent = `معاينة: ${fileName}`;
+    document.getElementById('previewImage').src = imageUrl;
+    const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+    modal.show();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('gradeForm');
     
