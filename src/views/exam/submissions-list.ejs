@@ -18,12 +18,38 @@
                 <p class="mb-0"><strong>إجمالي التقديمات:</strong> <%= submissions.length %></p>
             </div>
 
+            <!-- Bulk Actions -->
+            <% if (submissions.length > 0) { %>
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="selectAllSubmissions()">
+                            <i class="fas fa-check-square"></i> تحديد الكل
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                            <i class="fas fa-square"></i> إلغاء التحديد
+                        </button>
+                        <button class="btn btn-success btn-sm" id="bulkGradeBtn" onclick="showBulkGrading()" disabled>
+                            <i class="fas fa-clipboard-check"></i> تقييم جماعي
+                        </button>
+                    </div>
+                    <div>
+                        <span class="badge bg-info">
+                            إجمالي: <%= submissions.length %> | 
+                            غير مقيم: <%= submissions.filter(s => s.status !== 'GRADED').length %>
+                        </span>
+                    </div>
+                </div>
+            <% } %>
+
             <!-- Submissions Table -->
             <% if (submissions.length > 0) { %>
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
+                                <th width="30">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                </th>
                                 <th>الطلاب</th>
                                 <th>تاريخ التقديم</th>
                                 <th>الحالة</th>
@@ -34,6 +60,12 @@
                         <tbody>
                             <% submissions.forEach(submission => { %>
                                 <tr>
+                                    <td>
+                                        <input type="checkbox" class="submission-checkbox" 
+                                               value="<%= submission._id %>" 
+                                               onchange="updateBulkActions()"
+                                               <% if (submission.status === 'GRADED') { %>disabled<% } %>>
+                                    </td>
                                     <td>
                                         <%= submission.studentId.firstName %> <%= submission.studentId.lastName %>
                                         <br>
@@ -82,4 +114,123 @@
             <% } %>
         </div>
     </div>
-</div> 
+</div>
+
+<!-- Bulk Grading Modal -->
+<div class="modal fade" id="bulkGradingModal" tabindex="-1" aria-labelledby="bulkGradingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkGradingModalLabel">التقييم الجماعي</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="selectedSubmissionsInfo" class="mb-3"></div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    سيتم فتح كل تقديم في تبويب منفصل للتقييم السريع
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="openSelectedForGrading()">
+                    <i class="fas fa-external-link-alt"></i> فتح للتقييم
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const submissionCheckboxes = document.querySelectorAll('.submission-checkbox:not(:disabled)');
+    
+    submissionCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    
+    updateBulkActions();
+}
+
+function selectAllSubmissions() {
+    document.getElementById('selectAllCheckbox').checked = true;
+    toggleSelectAll();
+}
+
+function clearSelection() {
+    document.getElementById('selectAllCheckbox').checked = false;
+    toggleSelectAll();
+}
+
+function updateBulkActions() {
+    const selectedCheckboxes = document.querySelectorAll('.submission-checkbox:checked');
+    const bulkGradeBtn = document.getElementById('bulkGradeBtn');
+    
+    if (selectedCheckboxes.length > 0) {
+        bulkGradeBtn.disabled = false;
+        bulkGradeBtn.innerHTML = `<i class="fas fa-clipboard-check"></i> تقييم جماعي (${selectedCheckboxes.length})`;
+    } else {
+        bulkGradeBtn.disabled = true;
+        bulkGradeBtn.innerHTML = '<i class="fas fa-clipboard-check"></i> تقييم جماعي';
+    }
+    
+    // Update select all checkbox state
+    const allCheckboxes = document.querySelectorAll('.submission-checkbox:not(:disabled)');
+    const checkedCheckboxes = document.querySelectorAll('.submission-checkbox:checked');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    if (checkedCheckboxes.length === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    } else if (checkedCheckboxes.length === allCheckboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+    } else {
+        selectAllCheckbox.indeterminate = true;
+    }
+}
+
+function showBulkGrading() {
+    const selectedCheckboxes = document.querySelectorAll('.submission-checkbox:checked');
+    const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+    
+    if (selectedIds.length === 0) {
+        alert('يرجى تحديد تقديمات للتقييم');
+        return;
+    }
+    
+    const infoDiv = document.getElementById('selectedSubmissionsInfo');
+    infoDiv.innerHTML = `
+        <h6>التقديمات المحددة: ${selectedIds.length}</h6>
+        <p class="mb-0">سيتم فتح ${selectedIds.length} تبويب منفصل للتقييم.</p>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('bulkGradingModal'));
+    modal.show();
+}
+
+function openSelectedForGrading() {
+    const selectedCheckboxes = document.querySelectorAll('.submission-checkbox:checked');
+    const examId = '<%= exam._id %>';
+    
+    selectedCheckboxes.forEach((checkbox, index) => {
+        const submissionId = checkbox.value;
+        const gradeUrl = `/exams/${examId}/submissions/${submissionId}/grade`;
+        
+        // Delay opening tabs to avoid browser blocking
+        setTimeout(() => {
+            window.open(gradeUrl, '_blank');
+        }, index * 200);
+    });
+    
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('bulkGradingModal'));
+    modal.hide();
+    
+    // Clear selection after opening
+    setTimeout(() => {
+        clearSelection();
+    }, 1000);
+}
+</script> 

@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Exam = require('../models/Exam');
 const Result = require('../models/Result');
 const Department = require('../models/Department');
+const Submission = require('../models/Submission');
 const AppError = require('../utils/AppError');
 const { generateStudentResultsPDF } = require('../utils/pdfExporter');
 const { generateStudentResultsExcel } = require('../utils/excelExporter');
@@ -14,7 +15,8 @@ exports.getDashboard = async (req, res, next) => {
             totalUsers: await User.countDocuments(),
             totalExams: await Exam.countDocuments(),
             totalResults: await Result.countDocuments(),
-            totalDepartments: await Department.countDocuments()
+            totalDepartments: await Department.countDocuments(),
+            pendingGrades: await Submission.countDocuments({ status: { $ne: 'GRADED' } })
         };
 
         // Get recent users
@@ -36,6 +38,29 @@ exports.getDashboard = async (req, res, next) => {
         });
     } catch (error) {
         next(error);
+    }
+};
+
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 };
 
@@ -150,6 +175,29 @@ exports.getUsers = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 exports.getCreateUser = (req, res) => {
     res.render('admin/users/create', {
         title: 'إنشاء مستخدم جديد'
@@ -186,6 +234,29 @@ exports.postCreateUser = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 exports.getEditUser = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
@@ -202,6 +273,29 @@ exports.getEditUser = async (req, res) => {
         console.error('Get edit user error:', error);
         req.flash('error', 'Error loading user');
         res.redirect('/admin/users');
+    }
+};
+
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 };
 
@@ -234,6 +328,29 @@ exports.postEditUser = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 exports.deleteUser = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
@@ -261,6 +378,29 @@ exports.deleteUser = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 // Department Management
 exports.getDepartments = async (req, res) => {
     try {
@@ -273,6 +413,29 @@ exports.getDepartments = async (req, res) => {
         console.error('Get departments error:', error);
         req.flash('error', 'Error loading departments');
         res.redirect('/admin');
+    }
+};
+
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 };
 
@@ -290,6 +453,29 @@ exports.createDepartment = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 exports.updateDepartment = async (req, res) => {
     try {
         const { name, description } = req.body;
@@ -303,6 +489,29 @@ exports.updateDepartment = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 exports.deleteDepartment = async (req, res) => {
     try {
         await Department.findByIdAndDelete(req.params.id);
@@ -312,6 +521,29 @@ exports.deleteDepartment = async (req, res) => {
         console.error('Delete department error:', error);
         req.flash('error', 'Error deleting department');
         res.redirect('/admin/departments');
+    }
+};
+
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 };
 
@@ -337,6 +569,29 @@ exports.getSettings = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 exports.updateSettings = async (req, res) => {
     try {
         // Update settings
@@ -350,6 +605,29 @@ exports.updateSettings = async (req, res) => {
         console.error('Update settings error:', error);
         req.flash('error', 'Error updating settings');
         res.redirect('/admin/settings');
+    }
+};
+
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 };
 
@@ -376,6 +654,29 @@ exports.getExamReports = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 exports.getUserReports = async (req, res) => {
     try {
         const userStats = await User.aggregate([
@@ -395,6 +696,29 @@ exports.getUserReports = async (req, res) => {
         console.error('User reports error:', error);
         req.flash('error', 'Error loading user reports');
         res.redirect('/admin');
+    }
+};
+
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 };
 
@@ -527,6 +851,29 @@ exports.getPerformanceReports = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 // General Reports Dashboard
 exports.getReports = async (req, res) => {
     try {
@@ -587,6 +934,29 @@ exports.getReports = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 // Get student progress page
 exports.getStudentProgress = async (req, res) => {
     try {
@@ -639,6 +1009,29 @@ exports.getStudentProgress = async (req, res) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 // Add new staff member
 exports.postAddStaff = async (req, res, next) => {
     try {
@@ -669,6 +1062,29 @@ exports.postAddStaff = async (req, res, next) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 // Toggle user status
 exports.postToggleUserStatus = async (req, res, next) => {
     try {
@@ -684,6 +1100,29 @@ exports.postToggleUserStatus = async (req, res, next) => {
         res.json({ success: true });
     } catch (error) {
         next(error);
+    }
+};
+
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 };
 
@@ -735,6 +1174,29 @@ exports.getExportPDF = async (req, res, next) => {
     }
 };
 
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
 // Export student progress as Excel
 exports.getExportExcel = async (req, res, next) => {
     try {
@@ -780,6 +1242,29 @@ exports.getExportExcel = async (req, res, next) => {
 
     } catch (error) {
         next(error);
+    }
+};
+
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 };
 
@@ -875,5 +1360,28 @@ exports.exportUsersExcel = async (req, res, next) => {
 
     } catch (error) {
         next(error);
+    }
+};
+
+// API: Get pending grading submissions
+exports.getPendingGrading = async (req, res, next) => {
+    try {
+        const submissions = await Submission.find({ 
+            status: { $ne: 'GRADED' } 
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 })
+        .limit(50); // Limit to recent 50 submissions
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
     }
 }; 

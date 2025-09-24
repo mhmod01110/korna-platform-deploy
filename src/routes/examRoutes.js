@@ -57,4 +57,8 @@ router.get('/:examId/submit-project', isAuth, isStudent, examController.getProje
 router.post('/:examId/submit-project', isAuth, isStudent, examController.submitProjectExam);
 router.post('/submissions/:submissionId/grade-project', isAuth, isTeacher, examController.gradeProjectSubmission);
 
+// API routes for exam-specific grading
+router.get('/api/exams/:examId/pending-submissions', isAuth, isTeacher, examController.getPendingSubmissions);
+router.get('/api/exams/:examId/grading-stats', isAuth, isTeacher, examController.getGradingStats);
+
 module.exports = router; 

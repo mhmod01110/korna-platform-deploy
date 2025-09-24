@@ -1551,4 +1551,78 @@ exports.getGradeSubmission = async (req, res) => {
         req.flash('error', 'Error loading grading interface');
         res.redirect(`/exams/${req.params.examId}/submissions`);
     }
+};
+
+// API: Get pending submissions for a specific exam
+exports.getPendingSubmissions = async (req, res) => {
+    try {
+        const examId = req.params.examId;
+        
+        const submissions = await Submission.find({ 
+            examId: examId,
+            status: { $ne: 'GRADED' }
+        })
+        .populate('studentId', 'firstName lastName email')
+        .populate('examId', 'title type')
+        .sort({ submittedAt: -1 });
+
+        res.json({
+            success: true,
+            submissions
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+};
+
+// API: Get grading statistics for a specific exam
+exports.getGradingStats = async (req, res) => {
+    try {
+        const examId = req.params.examId;
+        
+        const totalSubmissions = await Submission.countDocuments({ examId: examId });
+        const gradedSubmissions = await Submission.countDocuments({ 
+            examId: examId, 
+            status: 'GRADED' 
+        });
+        const pendingSubmissions = totalSubmissions - gradedSubmissions;
+        
+        // Calculate average score for graded submissions
+        const gradedResults = await Submission.find({ 
+            examId: examId, 
+            status: 'GRADED' 
+        });
+        
+        let averageScore = null;
+        if (gradedResults.length > 0) {
+            const exam = await Exam.findById(examId);
+            const totalMarks = exam.totalMarks || exam.projectTotalMarks || 100;
+            
+            const totalScore = gradedResults.reduce((sum, submission) => {
+                const marks = submission.totalMarksObtained || 
+                            submission.projectSubmission?.marksObtained || 0;
+                return sum + (marks / totalMarks) * 100;
+            }, 0);
+            
+            averageScore = totalScore / gradedResults.length;
+        }
+
+        res.json({
+            success: true,
+            stats: {
+                totalSubmissions,
+                gradedSubmissions,
+                pendingSubmissions,
+                averageScore
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
 }; 
